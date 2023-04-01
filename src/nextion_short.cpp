@@ -1,6 +1,3 @@
-#include <NexUploadWIFI.h>
-#include <WiFi.h>
-#include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 
 
@@ -9,8 +6,6 @@ const char *password = "123456789";
 IPAddress local_IP(192, 168, 1, 100);
 IPAddress gateway(192, 168, 1, 100);
 
-// Create Nextion WiFi Uploader object
-NexUploadWIFI nex_uploader(115200);
 
 // Create Web Server
 AsyncWebServer server(80);
