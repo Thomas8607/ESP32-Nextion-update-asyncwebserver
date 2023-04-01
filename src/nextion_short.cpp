@@ -3,8 +3,8 @@
 
 const char *ssid = "ESP_proba";
 const char *password = "123456789";
-IPAddress local_IP(192, 168, 1, 100);
-IPAddress gateway(192, 168, 1, 100);
+IPAddress local_IP(192, 168, 10, 100);
+IPAddress gateway(192, 168, 10, 100);
 
 
 // Create Web Server
@@ -38,17 +38,16 @@ const char *index_html PROGMEM = R"====(
                 cmp = document.getElementById("completed");
                 if (file) {
                     if (file.name.endsWith(".tft")) {
-                        document.getElementById("button").disabled = false;
-                        sendInfo(file.size);
                         var xhttp = new XMLHttpRequest();
                         xhttp.onreadystatechange = function(){
                         if(xhttp.readyState == 4 && xhttp.status == 200) {
-                           alert('Ok status');
+                            document.getElementById("button").disabled = false;
                         } 
                         else {
-                          alert('Invalid status');
+                          
                         }
-                     };
+                    };
+                    sendInfo(xhttp, file.size);
                     } else {
                         alert("Invalid file type. Only .tft files are allowed.");
                     }
@@ -56,13 +55,12 @@ const char *index_html PROGMEM = R"====(
                     alert("Choose firmware file.");
                 }
             }
-            function sendInfo(size) {
-                var xmlHttp = new XMLHttpRequest();
+            function sendInfo(xmlHttp, size) {
                 xmlHttp.open("post", "/size");
                 xmlHttp.send(size);
             }
             function sendData() {
-              alert('Now this is a test')
+              alert("This is a test for upload button")
             }
             </script>
         </head>
@@ -98,11 +96,9 @@ void setup()
         {
             fsize = atoi((const char *)data);
             Serial.println("File size: " + String(fsize) + "bytes");
-            check_status = true;
-                                       
-            if (check_status)
-            {
-                request->send(200, "text/plain", "FAIL CONNECTION");
+            check_status = true;                     
+            if (check_status) {
+                request->send(400, "text/plain", "FAIL CONNECTION");
                 Serial.println("Check status Fail");
             }
             else {

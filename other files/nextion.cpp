@@ -184,7 +184,7 @@ void setup()
 		view_html += nextion_update_failed_footer_html;
     Serial.println("We are here");
     //request->send(200, "text/plain", "FAIL CONNECTION");
-		request->send(302, "text/html", view_html); 
+		request->send(200, "text/html", view_html); 
     });
 */
 
@@ -199,7 +199,7 @@ void setup()
             Serial.println("File size: " + String(fsize) + "bytes");
             if (check_status)
             {
-                request->send(200, "text/plain", "FAIL CONNECTION");
+                request->send(400, "text/plain", "FAIL CONNECTION");
                 //request->redirect("/nextion_fail");
                 Serial.println("Check status Fail");
             }
