@@ -55,8 +55,11 @@ const char *nextion_html PROGMEM = R"====(
                         var xhttp = new XMLHttpRequest();
                         xhttp.onreadystatechange = function(){
                         if(xhttp.readyState == 4 && xhttp.status == 200) {
-                            document.getElementById("button").disabled = false;
-                        } else {
+
+                           alert('Ok status');
+                        } 
+                        else {
+                          alert('Invalid status');
                         }
                      };
                     } else {
@@ -171,7 +174,7 @@ void setup()
         response->print(nextion_html);
         request->send(response); 
     });
-
+/*
     // Fail page
     server.on("/nextion_fail", HTTP_GET, [](AsyncWebServerRequest *request)
               {
@@ -183,7 +186,7 @@ void setup()
     //request->send(200, "text/plain", "FAIL CONNECTION");
 		request->send(302, "text/html", view_html); 
     });
-
+*/
 
     // Receive Firmware file size
     server.on("/size", HTTP_POST, [](AsyncWebServerRequest *request) {},
@@ -196,7 +199,8 @@ void setup()
             Serial.println("File size: " + String(fsize) + "bytes");
             if (check_status)
             {
-                request->redirect("/nextion_fail");
+                request->send(200, "text/plain", "FAIL CONNECTION");
+                //request->redirect("/nextion_fail");
                 Serial.println("Check status Fail");
             }
             else {
@@ -232,17 +236,7 @@ void loop() {
 }
 
 /*
-    Serial1.print("FLASH BYTES: ");
-    ESP.wdtDisable();
-    Serial1.println(Update.write(data, len));
-        Serial1.print("Update remaining: ");
-    Serial1.println(Update.remaining());
-    ESP.wdtEnable(10);
-    Serial1.print("HEAP: ");
-    Serial1.println(ESP.getFreeHeap());
-
-
-
+javascript from html
             function sendDataHandler(event) {
                 if (event.target.error == null) {
                     cmp.innerText = (offset * 100 / file.size).toFixed(1) + "%";
