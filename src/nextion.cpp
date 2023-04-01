@@ -27,11 +27,15 @@ void notFound(AsyncWebServerRequest *request)
     request->send(404, "text/plain", "Not found");
 }
 
+
+
+
+
 const char *nextion_html PROGMEM = R"====(
 <!DOCTYPE html>
     <html lang="en">
         <head>
-            <meta charset="UTF-8">
+            <meta http-equiv="content-type" content="text/html; charset=utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <title>Nextion kijelző frissítő</title>
             <script>
@@ -46,6 +50,7 @@ const char *nextion_html PROGMEM = R"====(
                 cmp = document.getElementById("completed");
                 if (file) {
                     if (file.name.endsWith(".tft")) {
+                        document.getElementById("button").disabled = false;
                         sendInfo(file.size);
                         var xhttp = new XMLHttpRequest();
                         xhttp.onreadystatechange = function(){
@@ -61,23 +66,21 @@ const char *nextion_html PROGMEM = R"====(
                     alert("Choose firmware file.");
                 }
             }
-
-
             function sendInfo(size) {
                 var xmlHttp = new XMLHttpRequest();
-                console.log(xmlHttp);
-                xmlHttp.open("post", "/s");
+                xmlHttp.open("post", "/size");
                 xmlHttp.send(size);
+            }
+            function sendData() {
+              alert('Now this is a test')
             }
             </script>
         </head>
     <body>
-        <input type="file" name="file" onchange="valCheck()"/>
-        <input type="button" id="button" value="upload" onclick="sendData()" disabled/>
-        <br/>
+        <input type="file" name="file" onchange="valCheck()">
+        <input type="button" id="button" value="upload" onclick="sendData()" disabled>
 	<label id="completed"></label>
-	<br/>
-        Chunk size: <input type="text" name="partSize" value="1024" size="4"/>
+        Chunk size: <input type="text" name="partSize" value="1024" size="4">
     </body>
 </html>
 )====";
@@ -87,7 +90,7 @@ const char *nextion_update_success_html PROGMEM = R"====(
 <!DOCTYPE html>
   <html lang="en">
     <head>
-      <meta charset="UTF-8">
+      <meta http-equiv="content-type" content="text/html; charset=utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <title>Nextion kijelző frissítő</title>
       <style>
@@ -122,7 +125,7 @@ const char *nextion_update_failed_header_html PROGMEM = R"====(
 <!DOCTYPE html>
  <html lang="en">
     <head>
-    <meta charset="UTF-8">
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Nextion display update</title>
     <style>
@@ -176,14 +179,14 @@ void setup()
 		view_html += nextion_update_failed_header_html;
 		view_html += "<label><h3>Error reason: " + error_reason + "</h3></label>";
 		view_html += nextion_update_failed_footer_html;
-        Serial.println("We are here");
-        //request->send(200, "text/plain", "FAIL CONNECTION");
-		request->send(200, "text/html", view_html); 
+    Serial.println("We are here");
+    //request->send(200, "text/plain", "FAIL CONNECTION");
+		request->send(302, "text/html", view_html); 
     });
 
 
     // Receive Firmware file size
-    server.on("/s", HTTP_POST, [](AsyncWebServerRequest *request) {},
+    server.on("/size", HTTP_POST, [](AsyncWebServerRequest *request) {},
         NULL,
         [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
         {
@@ -194,7 +197,6 @@ void setup()
             if (check_status)
             {
                 request->redirect("/nextion_fail");
-                // request->send(200, "text/plain", "FAIL CONNECTION");     // This command not good too
                 Serial.println("Check status Fail");
             }
             else {
@@ -202,6 +204,12 @@ void setup()
                 request->send(200);
             }
         });
+
+
+
+
+
+/*
     // Receive Firmware cunks and flash Nextion
     server.on(
         "/u", HTTP_POST, [](AsyncWebServerRequest *request) {},
@@ -213,7 +221,8 @@ void setup()
             Serial.println("Upload status: " + String(upload_status));
             request->send(200);
         });
-    
+*/
+
     server.onNotFound(notFound);
     server.begin();
 }
