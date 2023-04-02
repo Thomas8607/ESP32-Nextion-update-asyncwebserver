@@ -145,7 +145,7 @@ void setup()
             check_status = true;                     
             if (check_status) {
                 //request->send(400, "text/plain", "FAIL CONNECTION");
-                request->send(400);
+                //request->send(400);
                 request->redirect("/nextion_fail");
                 Serial.println("Check status Fail");
             }
