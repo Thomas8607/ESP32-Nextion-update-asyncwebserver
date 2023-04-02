@@ -12,7 +12,7 @@ AsyncWebServer server(80);
 
 bool check_status;
 uint32_t fsize;
-
+String error_reason = "Bad Connection";
 
 void notFound(AsyncWebServerRequest *request)
 {
@@ -73,6 +73,42 @@ const char *index_html PROGMEM = R"====(
 </html>
 )====";
 
+// Nextion update error header
+const char *nextion_update_failed_header_html PROGMEM = R"====(
+<!DOCTYPE html>
+ <html lang="en">
+    <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Nextion display update</title>
+    <style>
+      body {
+        background: DodgerBlue;
+      }
+      form {
+        background: Red;
+        max-width: 500px;
+        margin: 50px auto;
+        padding: 30px;
+        border-radius: 25px;
+        text-align: center
+      }
+      .btn {
+        padding: 10px 40px;
+        border-radius: 10px;
+      }
+      </style>
+    </head>
+    <body>
+      <form>
+)====";
+
+const char *nextion_update_failed_footer_html PROGMEM = R"====(
+        <input type="button" class="btn" value="Home Page" onclick="window.location.href='/'">
+      </form>
+    </body>
+  </html>
+)====";
 
 void setup()
 {
@@ -81,15 +117,25 @@ void setup()
     WiFi.softAPConfig(local_IP, gateway, IPAddress(255, 255, 255, 0));
     Serial.println("AP IP address: " + WiFi.softAPIP().toString());
 
-    // Index page
+// Index page
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
     {
         AsyncResponseStream *response = request->beginResponseStream("text/html");
         response->print(index_html);
         request->send(response); 
     });
-
-    // Receive Firmware file size
+// Fail page
+    server.on("/nextion_fail", HTTP_GET, [](AsyncWebServerRequest *request)
+              {
+        AsyncResponseStream *response = request->beginResponseStream("text/html");
+		String view_html;
+		view_html += nextion_update_failed_header_html;
+		view_html += "<label><h3>Error reason: " + error_reason + "</h3></label>";
+		view_html += nextion_update_failed_footer_html;
+        response->print(view_html);
+        request->send(response);
+    });
+// Receive Firmware file size
     server.on("/size", HTTP_POST, [](AsyncWebServerRequest *request) {},
         NULL,
         [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
@@ -98,7 +144,9 @@ void setup()
             Serial.println("File size: " + String(fsize) + "bytes");
             check_status = true;                     
             if (check_status) {
-                request->send(400, "text/plain", "FAIL CONNECTION");
+                //request->send(400, "text/plain", "FAIL CONNECTION");
+                request->send(400);
+                request->redirect("/nextion_fail");
                 Serial.println("Check status Fail");
             }
             else {
