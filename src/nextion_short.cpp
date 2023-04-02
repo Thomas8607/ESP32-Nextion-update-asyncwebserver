@@ -65,8 +65,33 @@ const char *index_html PROGMEM = R"====(
                 xmlHttp.open("post", "/size");
                 xmlHttp.send(size);
             }
+            function sendDataHandler(event) {
+                if (event.target.error == null) {
+                    cmp.innerText = (offset * 100 / file.size).toFixed(1) + "%";
+                    offset += event.target.result.byteLength;
+                } else {
+                    alert("Error: " + event.target.error);
+                    return;
+                }
+                var xmlHttp = new XMLHttpRequest();
+                xmlHttp.onreadystatechange = function() {
+                    if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+                        if (offset < file.size) {
+                            sendData();
+                        } else {
+                            cmp.innerText = "All data was sent";
+                        }
+                    }
+                };
+                xmlHttp.open("post", "/update");
+                xmlHttp.send(event.target.result);
+            }
             function sendData() {
-              alert("This is a test for upload button")
+                document.getElementById("button").disabled = true;
+                var reader = new FileReader();
+                var blob = file.slice(offset, partSize + offset);
+                reader.onload = sendDataHandler;
+                reader.readAsArrayBuffer(blob);
             }
             </script>
         </head>

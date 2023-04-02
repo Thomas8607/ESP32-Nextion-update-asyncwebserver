@@ -1,8 +1,7 @@
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
 #include <Update.h>
-#include <ESPNexUpload.h>
-//#include <NexUploadWIFI.h>
+
 
 // Wifi adatok
 const char *ssid = "ESP_proba";
@@ -12,7 +11,7 @@ IPAddress gateway(192, 168, 1, 100);
 String FW_VERSION = "1.0";
 bool espShouldReboot;
 AsyncWebServer server(80);
-ESPNexUpload nextion(115200);
+
 // NexUploadWIFI nex_uploader(115200);
 int fileSize  = 0;
 bool result   = true;
@@ -22,7 +21,7 @@ uint32_t period = 100;
 float vizhofok;
 float imap_nyomas;
 float gyorsulas;
-uint32_t fsize;
+
 String VizhofoktoString();
 String ImaptoString();
 String GyorsulastoString();
@@ -198,107 +197,11 @@ const char* esp_update_failed_html PROGMEM = R"(
   </html>
 )";
 //*******************************************************NEXTION FRISSÍTŐ OLDALAK******************************************************************************************
-const char* nextion_html PROGMEM = R"(
-<!DOCTYPE html>
-<html>
-<head>
-  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-  <title>Nextion updater</title>
-</head>
-<body>
-    <h3>Choose .tft file to upload</h3>
-    <form method='post' enctype='multipart/form-data'>
-        <input type='file' name='name' onchange='valSize(this)'>
-        <input id='button' type='submit' value='Upload & Update'>
-    </form>
-    <script>
-      function valSize(file){
-        var fs = file.files[0].size;
-        var xhttp = new XMLHttpRequest();
-        xhttp.onreadystatechange = function(){
-          if(this.readyState == 4 && this.status == 200){
-            // ESP received fileSize enable the submit button
-            document.getElementById("button").disabled = false;
-          }
-        };
-        xhttp.open('POST', '/nextion_fs', true);
-        xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-        xhttp.send(e);
-      }
-    </script>
-    <p>Updating might take a while if you have complex .tft file. Check Nextion display for progress.</p>
-</body>
-</html>
-)";
-// Nextion frissítés sikeres oldal
-const char* nextion_update_success_html PROGMEM = R"(
-<!DOCTYPE html>
-  <html>
-    <head>
-      <meta name='viewport' content='width=device-width, initial-scale=1' charset='UTF-8'>
-      <title>Nextion kijelző frissítő</title>
-      <style>
-        body {
-          background: DodgerBlue;
-        }
-        form {
-          background: Green;
-          max-width: 500px;
-          margin: 50px auto;
-          padding: 30px;
-          border-radius: 25px;
-          text-align: center
-        }
-	      .btn {
-          padding: 10px 40px;
-          border-radius: 10px;
-        }
-      </style>
-    </head>
-    <body>
-      <form>
-        <h1><strong>Frissítés sikeres</strong></h1>
-        <input type="button" class="btn" value="Vissza a kezdőoldalra" onclick="window.location.href='/'"/>
-      </form>
-    </body>
-  </html>
-)";
-// Nextion frissítés sikertelen oldal
-const char* nextion_update_failed_header_html PROGMEM = R"(
-<!DOCTYPE html>
-  <html>
-    <head>
-    <meta name='viewport' content='width=device-width, initial-scale=1' charset='UTF-8'>
-    <title>Nextion kijelző frissítő</title>
-    <style>
-      body {
-        background: DodgerBlue;
-      }
-      form {
-        background: Red;
-        max-width: 500px;
-        margin: 50px auto;
-        padding: 30px;
-        border-radius: 25px;
-        text-align: center
-      }
-      .btn {
-        padding: 10px 40px;
-        border-radius: 10px;
-      }
-      </style>
-    </head>
-    <body>
-      <form>
-)";
 
 
-const char* nextion_update_failed_footer_html PROGMEM = R"(
-        <input type="button" class="btn" value="Vissza a kezdőoldalra" onclick="window.location.href='/'"/>
-      </form>
-    </body>
-  </html>
-)";
+
+
+
 //*************************************************GRAFIKONOK*********************************************
 const char* grafikon_html = R"(
 <!DOCTYPE HTML>
@@ -572,33 +475,24 @@ void setup() {
 		} 
 	});
 //***********************************************NEXTION UPDATE************************************************************************************************* 
-  // Nextion update page
-  server.on("/nextion", HTTP_GET, [](AsyncWebServerRequest * request){
-    AsyncResponseStream *response = request->beginResponseStream("text/html");
-    request->send(200, "text/html", nextion_html);
-  });
-
-  // Receive Firmware file size
-  server.on("/nextion_fs", HTTP_POST, [](AsyncWebServerRequest * request){},
-    NULL,
-    [](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total) {
-      fsize = atoi((const char*)data);
-      Serial.println("File size: " + String(fsize) + "bytes");
-      request->send(200);
-  });
-  // Receive Firmware
-  server.on("/nextion", HTTP_POST, [](AsyncWebServerRequest *request) {
-        request->send(200);
-      }, handleUpload);
 
 
- /*
-        String nextion_failed_html;
-		    nextion_failed_html += nextion_update_failed_header_html;
-		    nextion_failed_html += "<h1><strong>Update failed! Reason:</strong></h1>" + nextion.statusMessage;
-		    nextion_failed_html += nextion_update_failed_footer_html;
-        AsyncWebServerResponse *response = request->beginResponse(500, "text/html", nextion_failed_html);
-*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // NotFound
   server.onNotFound(notFoundResponse);
 //**************************************GRAFIKONOK************************************************************
