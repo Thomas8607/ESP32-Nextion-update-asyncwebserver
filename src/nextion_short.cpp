@@ -12,7 +12,7 @@ AsyncWebServer server(80);
 
 bool check_status;
 uint32_t fsize;
-String error_reason = "Bad Connection";
+String error_reason = "";
 
 void notFound(AsyncWebServerRequest *request)
 {
@@ -43,8 +43,8 @@ const char *index_html PROGMEM = R"====(
                         if(xhttp.readyState == 4 && xhttp.status == 200) {
                             document.getElementById("button").disabled = false;
                         } 
-                        else {
-                          
+                        if(xhttp.readyState == 4 && xhttp.status == 302) {
+                            window.location.href = "/nextion_fail";
                         }
                     };
                     sendInfo(xhttp, file.size);
@@ -127,13 +127,11 @@ void setup()
 // Fail page
     server.on("/nextion_fail", HTTP_GET, [](AsyncWebServerRequest *request)
               {
-        AsyncResponseStream *response = request->beginResponseStream("text/html");
 		String view_html;
 		view_html += nextion_update_failed_header_html;
 		view_html += "<label><h3>Error reason: " + error_reason + "</h3></label>";
 		view_html += nextion_update_failed_footer_html;
-        response->print(view_html);
-        request->send(response);
+        request->send(302, "text/html", view_html);
     });
 // Receive Firmware file size
     server.on("/size", HTTP_POST, [](AsyncWebServerRequest *request) {},
@@ -141,16 +139,15 @@ void setup()
         [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
         {
             fsize = atoi((const char *)data);
-            Serial.println("File size: " + String(fsize) + "bytes");
-            check_status = true;                     
+            check_status = false;                     
             if (check_status) {
-                //request->send(400, "text/plain", "FAIL CONNECTION");
-                //request->send(400);
+                error_reason = "Check satus Fail";
                 request->redirect("/nextion_fail");
                 Serial.println("Check status Fail");
             }
             else {
                 Serial.println("Check status Ok");
+                Serial.println("File size: " + String(fsize) + "bytes");
                 request->send(200);
             }
         });
