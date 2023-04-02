@@ -1,4 +1,5 @@
 #include <ESPAsyncWebServer.h>
+#include "NexUploadWIFI.h"
 
 
 const char *ssid = "ESP_proba";
@@ -9,9 +10,14 @@ IPAddress gateway(192, 168, 10, 100);
 
 // Create Web Server
 AsyncWebServer server(80);
+// Create Nextion WiFi Uploader object
+NexUploadWIFI nextion(115200);
+
 
 bool check_status;
-uint32_t fsize;
+uint32_t filesize;
+String upload_reason = "";
+String check_reason = "";
 String error_reason = "";
 
 void notFound(AsyncWebServerRequest *request)
@@ -133,21 +139,23 @@ void setup()
 		view_html += nextion_update_failed_footer_html;
         request->send(302, "text/html", view_html);
     });
+
 // Receive Firmware file size
     server.on("/size", HTTP_POST, [](AsyncWebServerRequest *request) {},
         NULL,
         [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
         {
-            fsize = atoi((const char *)data);
-            check_status = false;                     
-            if (check_status) {
-                error_reason = "Check satus Fail";
+            filesize = atoi((const char *)data);
+            check_reason = nextion.check(filesize);
+            if (!check_reason.equals("0")) {
+                error_reason = check_reason;
+                Serial.println("Check status: " + error_reason);
                 request->redirect("/nextion_fail");
-                Serial.println("Check status Fail");
             }
             else {
                 Serial.println("Check status Ok");
-                Serial.println("File size: " + String(fsize) + "bytes");
+                error_reason = "";
+                Serial.println("File size: " + String(filesize) + "bytes");
                 request->send(200);
             }
         });

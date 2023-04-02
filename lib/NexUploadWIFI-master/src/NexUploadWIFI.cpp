@@ -23,17 +23,17 @@ NexUploadWIFI::NexUploadWIFI(uint32_t download_baudrate) {
     _download_baudrate = download_baudrate;
 }
 
-bool NexUploadWIFI::check(uint32_t size) {
+String NexUploadWIFI::check(uint32_t size) {
     _undownloadByte = size;
     if(_getBaudrate() == 0) {
         debugSerial.println("get baudrate error");
-        return true;
+        return "Get baudrate error";
     }
     if(!_setDownloadBaudrate(_download_baudrate)) {
         debugSerial.println("modify baudrate error");
-        return true;
+        return "Modify baudrate error";
     }
-    return false;
+    return "0";
 }
 
 uint16_t NexUploadWIFI::_getBaudrate(void) {
