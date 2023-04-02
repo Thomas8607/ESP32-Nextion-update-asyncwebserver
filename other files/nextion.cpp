@@ -209,10 +209,6 @@ void setup()
             }
         });
 
-
-
-
-
 /*
     // Receive Firmware cunks and flash Nextion
     server.on(

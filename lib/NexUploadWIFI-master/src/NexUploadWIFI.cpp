@@ -128,7 +128,7 @@ bool NexUploadWIFI::_setDownloadBaudrate(uint32_t baudrate) {
     return false;
 }
 
-bool NexUploadWIFI::uploadTftFile(uint8_t *data, size_t len) {
+String NexUploadWIFI::uploadTftFile(uint8_t *data, size_t len) {
     String string = String("");
     uint8_t timeout = 0;
     for(uint16_t i = 0; i < len; i++) {
@@ -141,7 +141,7 @@ bool NexUploadWIFI::uploadTftFile(uint8_t *data, size_t len) {
             else {
                 if(timeout >= 8) {
                     debugSerial.println("Connection lost");
-                    return false;
+                    return "Connection lost";
                 }
                 timeout++;
             }
@@ -152,7 +152,7 @@ bool NexUploadWIFI::uploadTftFile(uint8_t *data, size_t len) {
             _uploaded_bytes++;
 	    }
     }
-    return true;
+    return "0";
 }
 
 

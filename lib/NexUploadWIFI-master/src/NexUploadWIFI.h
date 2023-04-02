@@ -57,7 +57,7 @@ public: /* methods */
      * 
      * @return none. 
      */
-    bool uploadTftFile(uint8_t * toDecode, size_t len);
+    String uploadTftFile(uint8_t * toDecode, size_t len);
     
 private: /* methods */
 

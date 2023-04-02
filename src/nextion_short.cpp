@@ -24,7 +24,7 @@ void notFound(AsyncWebServerRequest *request)
 {
     request->send(404, "text/plain", "Not found");
 }
-
+// Nextion update index page
 const char *index_html PROGMEM = R"====(
 <!DOCTYPE html>
     <html lang="en">
@@ -115,7 +115,40 @@ const char *nextion_update_failed_footer_html PROGMEM = R"====(
     </body>
   </html>
 )====";
-
+// Nextion update success
+const char *nextion_update_success_html PROGMEM = R"====(
+<!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta http-equiv="content-type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Nextion kijelző frissítő</title>
+      <style>
+        body {
+          background: DodgerBlue;
+        }
+        form {
+          background: Green;
+          max-width: 500px;
+          margin: 50px auto;
+          padding: 30px;
+          border-radius: 25px;
+          text-align: center
+        }
+	      .btn {
+          padding: 10px 40px;
+          border-radius: 10px;
+        }
+      </style>
+    </head>
+    <body>
+      <form>
+        <h1><strong>Frissítés sikeres</strong></h1>
+        <input type="button" class="btn" value="Vissza a kezdőoldalra" onclick="window.location.href='/'">
+      </form>
+    </body>
+  </html>
+)====";
 void setup()
 {
     Serial.begin(115200);
@@ -139,7 +172,11 @@ void setup()
 		view_html += nextion_update_failed_footer_html;
         request->send(302, "text/html", view_html);
     });
-
+// Success page
+    server.on("/nextion_success", HTTP_GET, [](AsyncWebServerRequest *request)
+              {
+        request->send(302, "text/html", nextion_update_success_html);
+    });
 // Receive Firmware file size
     server.on("/size", HTTP_POST, [](AsyncWebServerRequest *request) {},
         NULL,
@@ -159,6 +196,23 @@ void setup()
                 request->send(200);
             }
         });
+
+    // Receive Firmware cunks and flash Nextion
+    server.on("/update", HTTP_POST, [](AsyncWebServerRequest *request) {},
+        NULL,
+        [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+        {
+            upload_reason = nextion.uploadTftFile(data, len);
+            if (!upload_reason.equals("0")) {
+                error_reason = upload_reason;
+                Serial.println("Check status: " + error_reason);
+                request->redirect("/nextion_fail");
+            }
+            else {
+                Serial.println("Upload status: " + upload_reason);
+                request->redirect("/nextion_success");
+            }
+    });
     server.onNotFound(notFound);
     server.begin();
 }
