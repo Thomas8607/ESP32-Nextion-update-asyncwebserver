@@ -1,5 +1,5 @@
 /**
- * @file NextionUploadWIFI.cpp
+ * @file NexUploadWIFI.cpp
  *
  * The implementation of download tft file for nextion. 
  *
@@ -14,20 +14,16 @@
  * the License, or (at your option) any later version.
  */
 
-#include "NextionUploadWIFI.h"
+#include "NexUploadWIFI.h"
 
-
-#define debugSerial Serial
 #define nexSerial Serial2
-#define nexSerialBegin(a, b, c) nexSerial.begin(a, SERIAL_8N1, b, c)
+#define debugSerial Serial
 
-NextionUploadWIFI::NextionUploadWIFI(uint32_t download_baudrate, gpio_num_t rx_pin, gpio_num_t tx_pin) {
+NexUploadWIFI::NexUploadWIFI(uint32_t download_baudrate) {
     _download_baudrate = download_baudrate;
-    _next_rx_pin = rx_pin;
-    _next_tx_pin = tx_pin;
 }
 
-String NextionUploadWIFI::check(uint32_t size) {
+String NexUploadWIFI::check(uint32_t size) {
     _undownloadByte = size;
     if(_getBaudrate() == 0) {
         debugSerial.println("get baudrate error");
@@ -40,8 +36,7 @@ String NextionUploadWIFI::check(uint32_t size) {
     return "0";
 }
 
-uint16_t NextionUploadWIFI::_getBaudrate(void) {
-    _baudrate = 0;
+uint16_t NexUploadWIFI::_getBaudrate(void) {
     uint32_t baudrate_array[5] = {115200,57600,38400,19200,9600};
     for(uint8_t i = 0; i < 5; i++) {
         if(_searchBaudrate(baudrate_array[i])) {
@@ -53,9 +48,9 @@ uint16_t NextionUploadWIFI::_getBaudrate(void) {
     return _baudrate;
 }
 
-bool NextionUploadWIFI::_searchBaudrate(uint32_t baudrate) {
+bool NexUploadWIFI::_searchBaudrate(uint32_t baudrate) {
     String response = String("");  
-    nexSerialBegin(baudrate, _next_rx_pin, _next_tx_pin);
+    nexSerial.begin(baudrate);
     this->sendCommand("");
     this->sendCommand("connect");
     this->recvRetString(response);  
@@ -65,7 +60,7 @@ bool NextionUploadWIFI::_searchBaudrate(uint32_t baudrate) {
     return true;
 }
 
-void NextionUploadWIFI::sendCommand(const char* cmd) {
+void NexUploadWIFI::sendCommand(const char* cmd) {
     while (nexSerial.available()) {
         nexSerial.read();
     }
@@ -75,7 +70,7 @@ void NextionUploadWIFI::sendCommand(const char* cmd) {
     nexSerial.write(0xFF);
 }
 
-uint16_t NextionUploadWIFI::recvRetString(String &response, uint32_t timeout, bool recv_flag) {
+uint16_t NexUploadWIFI::recvRetString(String &response, uint32_t timeout, bool recv_flag) {
     uint16_t ret = 0;
     uint8_t c = 0;
     uint8_t nr_of_FF_bytes = 0;
@@ -116,7 +111,7 @@ uint16_t NextionUploadWIFI::recvRetString(String &response, uint32_t timeout, bo
     return ret;
 }
 
-bool NextionUploadWIFI::_setDownloadBaudrate(uint32_t baudrate) {
+bool NexUploadWIFI::_setDownloadBaudrate(uint32_t baudrate) {
     String response = String(""); 
     String cmd = String("");
     String filesize_str = String(_undownloadByte,10);
@@ -125,7 +120,7 @@ bool NextionUploadWIFI::_setDownloadBaudrate(uint32_t baudrate) {
     this->sendCommand("");
     this->sendCommand(cmd.c_str());
     nexSerial.flush();
-    nexSerialBegin(baudrate, _next_rx_pin, _next_tx_pin);
+    nexSerial.begin(baudrate);
     this->recvRetString(response,500);  
     if(response.indexOf(0x05) != -1) { 
         return true;
@@ -133,7 +128,7 @@ bool NextionUploadWIFI::_setDownloadBaudrate(uint32_t baudrate) {
     return false;
 }
 
-String NextionUploadWIFI::uploadTftFile(uint8_t *data, size_t len) {
+String NexUploadWIFI::uploadTftFile(uint8_t *data, size_t len) {
     String string = String("");
     uint8_t timeout = 0;
     for(uint16_t i = 0; i < len; i++) {

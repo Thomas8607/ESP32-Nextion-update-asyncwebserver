@@ -38,7 +38,7 @@ public: /* methods */
      * @param download_baudrate - set download baudrate.
      */
     // Baudrate, RX_PIN, TX_PIN
-    NextionUploadWIFI(uint32_t download_baudrate, gpio_num_t rx_pin, gpio_num_t tx_pin);
+    NextionUploadWIFI(uint32_t upload_baudrate, gpio_num_t rx_pin, gpio_num_t tx_pin);
     /**
      * destructor. 
      * 
@@ -57,7 +57,20 @@ public: /* methods */
      * 
      * @return none. 
      */
-    String uploadTftFile(uint8_t * toDecode, size_t len);
+    String uploadTftFile(uint8_t *file_buf, size_t buf_size);
+    /**
+     * Send reset command to Nextion over serial
+     *
+     * @return none.
+     */
+	void softReset(void);
+
+    /**
+     * Send reset, end serial, reset _sent_packets & update status message
+     *
+     * @return none.
+     */
+	void end(void);
     
 private: /* methods */
 
@@ -101,7 +114,7 @@ private: /* methods */
      *
      * @return none.
      */
-    void sendCommand(const char* cmd);
+    void sendCommand(const char* cmd, bool tail = true, bool null_head = false);
 
     /*
      * Receive string data. 
@@ -113,12 +126,13 @@ private: /* methods */
      * @return the length of string buffer.
      *
      */   
-    uint16_t recvRetString(String &string, uint32_t timeout = 100,bool recv_flag = false);
-    
+    uint16_t recvRetString(String &response, uint32_t timeout = 500,bool recv_flag = false);
+
+
 private: /* data */ 
     uint32_t _baudrate; /*nextion serail baudrate*/
     uint32_t _undownloadByte; /*undownload byte of tft file*/
-    uint32_t _download_baudrate; /*download baudrate*/
+    uint32_t _upload_baudrate; /*upload baudrate*/
     uint32_t _uploaded_bytes = 0; /*counter of uploaded bytes*/
     gpio_num_t _next_rx_pin;
     gpio_num_t _next_tx_pin;

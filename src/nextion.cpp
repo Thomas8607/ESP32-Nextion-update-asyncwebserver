@@ -11,7 +11,7 @@ IPAddress gateway(192, 168, 10, 100);
 // Create Web Server
 AsyncWebServer server(80);
 // Create Nextion WiFi Uploader object
-NextionUploadWIFI nextion(115200, GPIO_NUM_47, GPIO_NUM_48);
+NextionUploadWIFI nextion(115200, GPIO_NUM_41, GPIO_NUM_42);
 
 
 uint32_t filesize;
