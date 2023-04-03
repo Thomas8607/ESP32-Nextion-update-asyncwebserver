@@ -39,36 +39,14 @@ String NextionUploadWIFI::check(uint32_t size) {
     }
     return "0";
 }
-/*
-uint16_t NextionUploadWIFI::_getBaudrate(void){
-    _baudrate = 0;
-    uint32_t baudrate_array[2] = {115200,9600};
-    uint32_t previousMillis = 0;
-    const uint32_t interval = 500; // wait for 500ms
-    uint8_t i = 0;
-    while (i < 2 && _baudrate == 0) {
-        uint32_t currentMillis = millis();
-        if (currentMillis - previousMillis >= interval) {
-            previousMillis = currentMillis;
-            if(_searchBaudrate(baudrate_array[i])) {
-                _baudrate = baudrate_array[i];
-            }
-            i++;
-        }
-    }
-    debugSerial.println("Baudrate is: " + String(_baudrate));
-    return _baudrate;
-}
-*/
-uint16_t NextionUploadWIFI::_getBaudrate(void){
-    _baudrate = 0;
+
+uint16_t NextionUploadWIFI::_getBaudrate(void) {
     uint32_t baudrate_array[7] = {115200,19200,9600,57600,38400,4800,2400};
     for(uint8_t i = 0; i < 7; i++) {
         if(_searchBaudrate(baudrate_array[i])) {
             _baudrate = baudrate_array[i];
             break;
         }
-		//delay(1500); // wait for 1500 ms
     }
     debugSerial.println("Baudrate is: " + String(_baudrate));
     return _baudrate;
@@ -77,65 +55,34 @@ uint16_t NextionUploadWIFI::_getBaudrate(void){
 bool NextionUploadWIFI::_searchBaudrate(uint32_t baudrate){
     String response = String("");
     Serial2.begin(9600, SERIAL_8N1, GPIO_NUM_41, GPIO_NUM_42);
-    nexSerialBegin(baudrate, _next_rx_pin, _next_tx_pin);
-    const char _nextion_FF_FF[3] = {0xFF, 0xFF, 0x00};
-    this->sendCommand("DRAKJHSUYDGBNCJHGJKSHBDN");
-    this->sendCommand("",true,true);                    // 0x00 0xFF 0xFF 0xFF
+    //nexSerialBegin(baudrate, _next_rx_pin, _next_tx_pin);
+    this->sendCommand("");
+    this->sendCommand("connect");
     this->recvRetString(response);
-    this->sendCommand("connect");                       // first connect attempt
-    this->recvRetString(response);
-    response = String("");
-    uint32_t currentMillis = millis();
-    uint32_t waiting_time = 110;
-    while(millis() - currentMillis < waiting_time) {
-        // waiting
+    if(response.indexOf(F("comok")) != -1) {
+        return true;
     }
-    this->sendCommand(_nextion_FF_FF, false);
-    this->sendCommand("connect");                       // second attempt
-    this->recvRetString(response);
-    if(response.indexOf(F("comok")) == -1 && response[0] != 0x1A) {
-        return false;
-    }
-    return true;
+    return false;
 }
 
-void NextionUploadWIFI::sendCommand(const char* cmd, bool tail, bool null_head) {
-	if(null_head) {
-		nexSerial.write(0x00);
-	}
-    while(nexSerial.available()) {
-        nexSerial.read();
-    }
+void NextionUploadWIFI::sendCommand(const char* cmd) {
     nexSerial.print(cmd);
-    if(tail) {
-		nexSerial.write(0xFF);
-		nexSerial.write(0xFF);
-		nexSerial.write(0xFF);
-	}
+	nexSerial.write(0xFF);
+	nexSerial.write(0xFF);
+	nexSerial.write(0xFF);
 }
 
 uint16_t NextionUploadWIFI::recvRetString(String &response, uint32_t timeout, bool recv_flag) {
     uint16_t ret = 0;
     uint8_t c = 0;
-    uint8_t nr_of_FF_bytes = 0;
-    long start;
+    int32_t start;
     bool exit_flag = false;
-    bool ff_flag = false;
     start = millis();
     while (millis() - start <= timeout) {
         while (nexSerial.available()) {
             c = nexSerial.read(); 
             if(c == 0) {
                 continue;
-            }
-            if (c == 0xFF)
-				nr_of_FF_bytes++;
-			else {
-				nr_of_FF_bytes=0;
-				ff_flag = false;
-			}
-			if(nr_of_FF_bytes >= 3) {
-				ff_flag = true;
             }
             response += (char)c;
             if(recv_flag) {
@@ -144,12 +91,9 @@ uint16_t NextionUploadWIFI::recvRetString(String &response, uint32_t timeout, bo
                 } 
             }
         }
-        if(exit_flag || ff_flag) {
+        if(exit_flag) {
             break;
         }
-    }
-	if(ff_flag) {
-		response = response.substring(0, response.length() -3);
     }
     ret = response.length();
     return ret;
@@ -158,22 +102,15 @@ uint16_t NextionUploadWIFI::recvRetString(String &response, uint32_t timeout, bo
 bool NextionUploadWIFI::_setDownloadBaudrate(uint32_t baudrate){
     String response = String(""); 
     String cmd = String("");
-	cmd = F("00");
-	this->sendCommand(cmd.c_str());
-	this->recvRetString(response, 800,true); // normal response time is 400ms
     String filesize_str = String(_undownloadByte,10);
     String baudrate_str = String(baudrate);
     cmd = "whmi-wri " + filesize_str + "," + baudrate_str + ",0";
+    this->sendCommand("");
 	this->sendCommand(cmd.c_str());
-	// Without flush, the whmi command will NOT transmitted by the ESP in the current baudrate
-	// because switching to another baudrate (nexSerialBegin command) has an higher prio.
-	// The ESP will first jump to the new 'upload_baudrate' and than process the serial 'transmit buffer'
-	// The flush command forced the ESP to wait until the 'transmit buffer' is empty
 	nexSerial.flush();
 	nexSerialBegin(baudrate, _next_rx_pin, _next_tx_pin);
     debugSerial.println("changing upload baudrate..." + String(baudrate));
-	this->recvRetString(response, 800,true); // normal response time is 400ms
-	// The Nextion display will, if it's ready to accept data, send a 0x05 byte.
+	this->recvRetString(response, 500,true);
     if(response.indexOf(0x05) != -1) { 
         debugSerial.println(F("preparation for firmware update done"));
         return 1;

@@ -114,8 +114,8 @@ private: /* methods */
      *
      * @return none.
      */
-    void sendCommand(const char* cmd, bool tail = true, bool null_head = false);
-
+    void sendCommand(const char* cmd);
+    //void sendCommand(const char* cmd, bool tail = true, bool null_head = false);
     /*
      * Receive string data. 
      * 
@@ -126,7 +126,7 @@ private: /* methods */
      * @return the length of string buffer.
      *
      */   
-    uint16_t recvRetString(String &response, uint32_t timeout = 500,bool recv_flag = false);
+    uint16_t recvRetString(String &response, uint32_t timeout = 100,bool recv_flag = false);
 
 
 private: /* data */ 
