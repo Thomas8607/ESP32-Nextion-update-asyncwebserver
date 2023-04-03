@@ -37,7 +37,7 @@ public: /* methods */
      * @param SD_chip_select - sd chip select pin.
      * @param download_baudrate - set download baudrate.
      */
-    //NexUploadWIFI(uint32_t download_baudrate);
+    // Baudrate, RX_PIN, TX_PIN
     NextionUploadWIFI(uint32_t download_baudrate, gpio_num_t rx_pin, gpio_num_t tx_pin);
     /**
      * destructor. 

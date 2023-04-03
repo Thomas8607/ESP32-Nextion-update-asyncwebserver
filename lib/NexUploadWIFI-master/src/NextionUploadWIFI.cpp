@@ -1,5 +1,5 @@
 /**
- * @file NexUploadWIFI.cpp
+ * @file NextionUploadWIFI.cpp
  *
  * The implementation of download tft file for nextion. 
  *
