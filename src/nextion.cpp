@@ -1,5 +1,5 @@
 #include <ESPAsyncWebServer.h>
-#include "NexUploadWIFI.h"
+#include <NextionUploadWIFI.h>
 
 
 const char *ssid = "ESP_proba";
@@ -11,10 +11,9 @@ IPAddress gateway(192, 168, 10, 100);
 // Create Web Server
 AsyncWebServer server(80);
 // Create Nextion WiFi Uploader object
-NexUploadWIFI nextion(115200);
+NextionUploadWIFI nextion(115200, GPIO_NUM_47, GPIO_NUM_48);
 
 
-bool check_status;
 uint32_t filesize;
 String upload_reason = "";
 String check_reason = "";
@@ -65,6 +64,9 @@ const char *index_html PROGMEM = R"====(
                 xmlHttp.open("post", "/size");
                 xmlHttp.send(size);
             }
+
+
+
             function sendDataHandler(event) {
                 if (event.target.error == null) {
                     cmp.innerText = (offset * 100 / file.size).toFixed(1) + "%";
@@ -88,6 +90,7 @@ const char *index_html PROGMEM = R"====(
             }
             function sendData() {
                 document.getElementById("button").disabled = true;
+                document.getElementById("uploading").style.display = "inline";
                 var reader = new FileReader();
                 var blob = file.slice(offset, partSize + offset);
                 reader.onload = sendDataHandler;
@@ -98,6 +101,7 @@ const char *index_html PROGMEM = R"====(
     <body>
         <input type="file" name="file" onchange="valCheck()">
         <input type="button" id="button" value="upload" onclick="sendData()" disabled>
+        <span id="uploading" style="display:none;">feltöltés folyamatban...</span>
 	      <label id="completed"></label>
         Chunk size: <input type="text" name="partSize" value="1024" size="4">
     </body>
@@ -111,7 +115,7 @@ const char *nextion_update_failed_header_html PROGMEM = R"====(
     <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Nextion display update</title>
+    <title>Nextion display updater</title>
     <style>
       body {
         background: DodgerBlue;
@@ -147,7 +151,7 @@ const char *nextion_update_success_html PROGMEM = R"====(
     <head>
       <meta http-equiv="content-type" content="text/html; charset=utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
-      <title>Nextion kijelző frissítő</title>
+      <title>Nextion display updater</title>
       <style>
         body {
           background: DodgerBlue;
@@ -168,14 +172,14 @@ const char *nextion_update_success_html PROGMEM = R"====(
     </head>
     <body>
       <form>
-        <h1><strong>Frissítés sikeres</strong></h1>
-        <input type="button" class="btn" value="Vissza a kezdőoldalra" onclick="window.location.href='/'">
+        <h1><strong>Successfull update!</strong></h1>
+        <input type="button" class="btn" value="Home page" onclick="window.location.href='/'">
       </form>
     </body>
   </html>
 )====";
-void setup()
-{
+//***********************************************************************SETUP************************************************************************************************
+void setup() {
     Serial.begin(115200);
     WiFi.softAP(ssid, password);
     WiFi.softAPConfig(local_IP, gateway, IPAddress(255, 255, 255, 0));
@@ -204,8 +208,8 @@ void setup()
     });
 // Receive Firmware file size
     server.on("/size", HTTP_POST, [](AsyncWebServerRequest *request) {},
-        NULL,
-        [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+    NULL,
+    [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
         {
             filesize = atoi((const char *)data);
             check_reason = nextion.check(filesize);
@@ -220,12 +224,12 @@ void setup()
                 Serial.println("File size: " + String(filesize) + "bytes");
                 request->send(200);
             }
-        });
+    });
 
-    // Receive Firmware cunks and flash Nextion
+    // Receive Firmware cunks and flash Nextion display
     server.on("/update", HTTP_POST, [](AsyncWebServerRequest *request) {},
-        NULL,
-        [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+    NULL,
+    [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
         {
             upload_reason = nextion.uploadTftFile(data, len);
             if (!upload_reason.equals("0")) {
@@ -241,7 +245,7 @@ void setup()
     server.onNotFound(notFound);
     server.begin();
 }
-
+//************************************************************************************LOOP***************************************************************************************************
 void loop() {
 
 }

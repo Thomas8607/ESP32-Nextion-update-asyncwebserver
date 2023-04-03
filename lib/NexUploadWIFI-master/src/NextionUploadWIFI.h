@@ -13,8 +13,8 @@
  * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
  */
-#ifndef __NEXUPLOAD_H__
-#define __NEXUPLOAD_H__
+#ifndef __NEXTIONUPLOADWIFI_H__
+#define __NEXTIONUPLOADWIFI_H__
 #include <Arduino.h>
 
 /**
@@ -26,7 +26,7 @@
  *
  * Provides the API for nextion to download the ftf file.
  */
-class NexUploadWIFI
+class NextionUploadWIFI
 {
 public: /* methods */
 
@@ -37,13 +37,13 @@ public: /* methods */
      * @param SD_chip_select - sd chip select pin.
      * @param download_baudrate - set download baudrate.
      */
-    NexUploadWIFI(uint32_t download_baudrate);
-
+    //NexUploadWIFI(uint32_t download_baudrate);
+    NextionUploadWIFI(uint32_t download_baudrate, gpio_num_t rx_pin, gpio_num_t tx_pin);
     /**
      * destructor. 
      * 
      */
-    ~NexUploadWIFI(){}
+    ~NextionUploadWIFI(){}
     
     /*
      * start download.
@@ -120,6 +120,8 @@ private: /* data */
     uint32_t _undownloadByte; /*undownload byte of tft file*/
     uint32_t _download_baudrate; /*download baudrate*/
     uint32_t _uploaded_bytes = 0; /*counter of uploaded bytes*/
+    gpio_num_t _next_rx_pin;
+    gpio_num_t _next_tx_pin;
 };
 /**
  * @}
