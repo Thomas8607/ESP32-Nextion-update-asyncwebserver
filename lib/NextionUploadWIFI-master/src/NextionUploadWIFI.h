@@ -80,7 +80,7 @@ private: /* methods */
      * @return communicate baudrate.
      *
      */
-    uint16_t _getBaudrate(void);
+    uint32_t _getBaudrate(void);
     
     /*
      * check tft file.

@@ -40,8 +40,8 @@ String NextionUploadWIFI::check(uint32_t size) {
     return "0";
 }
 
-uint16_t NextionUploadWIFI::_getBaudrate(void) {
-    uint32_t baudrate_array[7] = {115200,19200,9600,57600,38400,4800,2400};
+uint32_t NextionUploadWIFI::_getBaudrate(void) {
+    uint32_t baudrate_array[7] = {115200,9600,19200,57600,38400,4800,2400};
     for(uint8_t i = 0; i < 7; i++) {
         if(_searchBaudrate(baudrate_array[i])) {
             _baudrate = baudrate_array[i];
@@ -54,14 +54,14 @@ uint16_t NextionUploadWIFI::_getBaudrate(void) {
 
 bool NextionUploadWIFI::_searchBaudrate(uint32_t baudrate){
     String response = String("");
-    Serial2.begin(9600, SERIAL_8N1, GPIO_NUM_41, GPIO_NUM_42);
-    //nexSerialBegin(baudrate, _next_rx_pin, _next_tx_pin);
+    nexSerialBegin(baudrate, _next_rx_pin, _next_tx_pin);
     this->sendCommand("");
     this->sendCommand("connect");
     this->recvRetString(response);
     if(response.indexOf(F("comok")) != -1) {
         return true;
     }
+    nexSerial.end();
     return false;
 }
 
