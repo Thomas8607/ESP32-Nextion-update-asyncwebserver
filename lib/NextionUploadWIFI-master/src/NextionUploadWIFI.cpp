@@ -167,7 +167,6 @@ void NextionUploadWIFI::end(){
 	// reset sent packets counter
 	_uploaded_bytes = 0;
     debugSerial.println("Upload Ok");
-
 }
 
 
