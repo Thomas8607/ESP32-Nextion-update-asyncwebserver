@@ -57,7 +57,7 @@ public: /* methods */
      * 
      * @return none. 
      */
-    String uploadTftFile(uint8_t *file_buf, size_t buf_size);
+    bool uploadTftFile(uint8_t *file_buf, size_t buf_size);
     /**
      * Send reset command to Nextion over serial
      *

@@ -121,7 +121,7 @@ bool NextionUploadWIFI::_setDownloadBaudrate(uint32_t baudrate){
 	}
 }
 
-String NextionUploadWIFI::uploadTftFile(uint8_t *file_buf, size_t buf_size) {
+bool NextionUploadWIFI::uploadTftFile(uint8_t *file_buf, size_t buf_size) {
     String string = String("");
     uint8_t timeout = 0;
     for(uint16_t i = 0; i < buf_size; i++) {
@@ -134,7 +134,7 @@ String NextionUploadWIFI::uploadTftFile(uint8_t *file_buf, size_t buf_size) {
             else {
                 if(timeout >= 8) {
                     debugSerial.println("Connection lost");
-                    return "Connection lost";
+                    return false;
                 }
                 timeout++;
             }
@@ -145,7 +145,7 @@ String NextionUploadWIFI::uploadTftFile(uint8_t *file_buf, size_t buf_size) {
             _uploaded_bytes++;
 	    }
     }
-    return "0";
+    return true;
 }
 
 void NextionUploadWIFI::softReset(void){

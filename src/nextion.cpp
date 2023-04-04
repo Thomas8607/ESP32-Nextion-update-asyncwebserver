@@ -15,7 +15,7 @@ NextionUploadWIFI nextion(115200, GPIO_NUM_41, GPIO_NUM_42);
 
 
 uint32_t filesize;
-String upload_reason = "";
+bool upload_status;
 String check_reason = "";
 String error_reason = "";
 
@@ -36,7 +36,6 @@ const char *index_html PROGMEM = R"====(
             var file;
             var cmp;
             var offset = 0;
-
             function valCheck() {
                 file = document.querySelector("input[name=file]").files[0];
                 partSize = parseInt(document.querySelector("input[name=partSize]").value);
@@ -66,10 +65,9 @@ const char *index_html PROGMEM = R"====(
             }
 
 
-
             function sendDataHandler(event) {
                 if (event.target.error == null) {
-                    cmp.innerText = (offset * 100 / file.size).toFixed(1) + "%";
+                    cmp.innerText = (offset * 100 / file.size).toFixed(0) + "%";
                     offset += event.target.result.byteLength;
                 } else {
                     alert("Error: " + event.target.error);
@@ -81,10 +79,14 @@ const char *index_html PROGMEM = R"====(
                         if (offset < file.size) {
                             sendData();
                         } else {
+                            window.location.href = "/nextion_success";
                             cmp.innerText = "All data was sent";
                         }
                     }
-                };
+                    if (xmlHttp.readyState == 4 && (xmlHttp.status == 302 || xmlHttp.status == 404)) {
+                        window.location.href = "/nextion_fail";
+                    }
+                };        
                 xmlHttp.open("post", "/update");
                 xmlHttp.send(event.target.result);
             }
@@ -99,10 +101,10 @@ const char *index_html PROGMEM = R"====(
             </script>
         </head>
     <body>
-        <input type="file" name="file" onchange="valCheck()">
-        <input type="button" id="button" value="upload" onclick="sendData()" disabled>
-        <span id="uploading" style="display:none;">feltöltés folyamatban...</span>
-	      <label id="completed"></label>
+        <input type="file" name="file" onchange="valCheck()"><br><br>
+        <input type="button" id="button" value="upload" onclick="sendData()" disabled><br><br>
+        <span id="uploading" style="display:none;">Upload in process...</span><br>
+	      <label id="completed"></label><br>
         Chunk size: <input type="text" name="partSize" value="1024" size="4">
     </body>
 </html>
@@ -173,6 +175,9 @@ const char *nextion_update_success_html PROGMEM = R"====(
     <body>
       <form>
         <h1><strong>Successfull update!</strong></h1>
+        <br>
+        <br>
+        <h3>Display will restart!</h3>
         <input type="button" class="btn" value="Home page" onclick="window.location.href='/'">
       </form>
     </body>
@@ -186,15 +191,13 @@ void setup() {
     Serial.println("AP IP address: " + WiFi.softAPIP().toString());
 
 // Index page
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-    {
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
         AsyncResponseStream *response = request->beginResponseStream("text/html");
         response->print(index_html);
         request->send(response); 
     });
 // Fail page
-    server.on("/nextion_fail", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
+    server.on("/nextion_fail", HTTP_GET, [](AsyncWebServerRequest *request) {
 		String view_html;
 		view_html += nextion_update_failed_header_html;
 		view_html += "<label><h3>Error reason: " + error_reason + "</h3></label>";
@@ -202,8 +205,7 @@ void setup() {
         request->send(302, "text/html", view_html);
     });
 // Success page
-    server.on("/nextion_success", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
+    server.on("/nextion_success", HTTP_GET, [](AsyncWebServerRequest *request) {
         request->send(302, "text/html", nextion_update_success_html);
     });
 // Receive Firmware file size
@@ -231,15 +233,13 @@ void setup() {
     NULL,
     [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
         {
-            upload_reason = nextion.uploadTftFile(data, len);
-            if (!upload_reason.equals("0")) {
-                error_reason = upload_reason;
-                Serial.println("Check status: " + error_reason);
-                request->redirect("/nextion_fail");
+            request->send(200);
+            if(!nextion.uploadTftFile(data, len)) {
+                request->send(200);
             }
             else {
-                Serial.println("Upload status: " + upload_reason);
-                request->redirect("/nextion_success");
+                error_reason = "Connection lost!";
+                request->redirect("/nextion_fail");
             }
     });
     server.onNotFound(notFound);
@@ -249,3 +249,12 @@ void setup() {
 void loop() {
 
 }
+
+
+/*
+Egy tizedes pontos
+cmp.innerText = Math.round(offset * 100 / file.size) + "%";
+
+végén
+
+*/
