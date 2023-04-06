@@ -30,11 +30,11 @@ NextionUploadWIFI::NextionUploadWIFI(uint32_t upload_baudrate, gpio_num_t rx_pin
 String NextionUploadWIFI::check(uint32_t size) {
     _undownloadByte = size;
     if(_getBaudrate() == 0) {
-        debugSerial.println("get baudrate error");
+        //debugSerial.println("get baudrate error");
         return "Get baudrate error";
     }
     if(!_setDownloadBaudrate(_upload_baudrate)) {
-        debugSerial.println("modify baudrate error");
+        //debugSerial.println("modify baudrate error");
         return "Modify baudrate error";
     }
     return "0";
@@ -48,7 +48,7 @@ uint32_t NextionUploadWIFI::_getBaudrate(void) {
             break;
         }
     }
-    debugSerial.println("Baudrate is: " + String(_baudrate));
+    //debugSerial.println("Baudrate is: " + String(_baudrate));
     return _baudrate;
 }
 
@@ -109,14 +109,14 @@ bool NextionUploadWIFI::_setDownloadBaudrate(uint32_t baudrate){
 	this->sendCommand(cmd.c_str());
 	nexSerial.flush();
 	nexSerialBegin(baudrate, _next_rx_pin, _next_tx_pin);
-    debugSerial.println("changing upload baudrate..." + String(baudrate));
+    //debugSerial.println("changing upload baudrate..." + String(baudrate));
 	this->recvRetString(response, 500,true);
     if(response.indexOf(0x05) != -1) { 
-        debugSerial.println(F("preparation for firmware update done"));
+        //debugSerial.println(F("preparation for firmware update done"));
         return 1;
     }
     else { 
-        debugSerial.println(F("preparation for firmware update failed"));
+        //debugSerial.println(F("preparation for firmware update failed"));
 		return 0;
 	}
 }
@@ -133,7 +133,7 @@ bool NextionUploadWIFI::uploadTftFile(uint8_t *file_buf, size_t buf_size) {
             } 
             else {
                 if(timeout >= 8) {
-                    debugSerial.println("Connection lost");
+                    //debugSerial.println("Connection lost");
                     return false;
                 }
                 timeout++;
@@ -166,7 +166,7 @@ void NextionUploadWIFI::end(){
     nexSerial.end();
 	// reset sent packets counter
 	_uploaded_bytes = 0;
-    debugSerial.println("Upload Ok");
+    //debugSerial.println("Upload Ok");
 }
 
 

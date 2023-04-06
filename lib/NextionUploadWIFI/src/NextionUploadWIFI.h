@@ -13,8 +13,8 @@
  * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
  */
-#ifndef __NEXUPLOAD_H__
-#define __NEXUPLOAD_H__
+#ifndef __NEXTIONUPLOADWIFI_H__
+#define __NEXTIONUPLOADWIFI_H__
 #include <Arduino.h>
 
 /**
@@ -26,24 +26,24 @@
  *
  * Provides the API for nextion to download the ftf file.
  */
-class NexUploadWIFI
+class NextionUploadWIFI
 {
 public: /* methods */
 
     /**
      * Constructor. 
      * 
-     * @param file_name - tft file name. 
-     * @param SD_chip_select - sd chip select pin.
-     * @param download_baudrate - set download baudrate.
+     * @param upload_baudrate - set upload baudrate.
+     * @param rx_pin - set serial rx pin.
+     * @param tx_pin - set serial tx pin.
      */
-    NexUploadWIFI(uint32_t download_baudrate);
-
+    // Baudrate, RX_PIN, TX_PIN
+    NextionUploadWIFI(uint32_t upload_baudrate, gpio_num_t rx_pin, gpio_num_t tx_pin);
     /**
      * destructor. 
      * 
      */
-    ~NexUploadWIFI(){}
+    ~NextionUploadWIFI(){}
     
     /*
      * start download.
@@ -57,7 +57,20 @@ public: /* methods */
      * 
      * @return none. 
      */
-    String uploadTftFile(uint8_t * toDecode, size_t len);
+    bool uploadTftFile(uint8_t *file_buf, size_t buf_size);
+    /**
+     * Send reset command to Nextion over serial
+     *
+     * @return none.
+     */
+	void softReset(void);
+
+    /**
+     * Send reset, end serial, reset _sent_packets & update status message
+     *
+     * @return none.
+     */
+	void end(void);
     
 private: /* methods */
 
@@ -67,7 +80,7 @@ private: /* methods */
      * @return communicate baudrate.
      *
      */
-    uint16_t _getBaudrate(void);
+    uint32_t _getBaudrate(void);
     
     /*
      * check tft file.
@@ -102,7 +115,7 @@ private: /* methods */
      * @return none.
      */
     void sendCommand(const char* cmd);
-
+    //void sendCommand(const char* cmd, bool tail = true, bool null_head = false);
     /*
      * Receive string data. 
      * 
@@ -113,13 +126,16 @@ private: /* methods */
      * @return the length of string buffer.
      *
      */   
-    uint16_t recvRetString(String &string, uint32_t timeout = 100,bool recv_flag = false);
-    
+    uint16_t recvRetString(String &response, uint32_t timeout = 100,bool recv_flag = false);
+
+
 private: /* data */ 
     uint32_t _baudrate; /*nextion serail baudrate*/
     uint32_t _undownloadByte; /*undownload byte of tft file*/
-    uint32_t _download_baudrate; /*download baudrate*/
+    uint32_t _upload_baudrate; /*upload baudrate*/
     uint32_t _uploaded_bytes = 0; /*counter of uploaded bytes*/
+    gpio_num_t _next_rx_pin;
+    gpio_num_t _next_tx_pin;
 };
 /**
  * @}

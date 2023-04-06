@@ -32,26 +32,6 @@ const char *index_html PROGMEM = R"====(
             <meta http-equiv="content-type" content="text/html; charset=utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <title>Index page</title>
-            <style>
-                body {
-                    background: DodgerBlue;
-                    font-family: sans-serif;
-                }
-                form {
-                    background: white;
-                    max-width: 450px;
-                    margin: 50px auto;
-                    padding: 100px;
-                    border-radius: 25px;
-                    text-align: center
-                }
-                    input[type="button"] {
-                    background-color: Green;
-                    padding: 10px 20px;
-                    border-radius: 8px;
-                    color: black;
-                }
-        </style>
             <script>
             var partSize = 100;
             var file;
@@ -84,6 +64,8 @@ const char *index_html PROGMEM = R"====(
                 xmlHttp.open("post", "/size");
                 xmlHttp.send(size);
             }
+
+
             function sendDataHandler(event) {
                 if (event.target.error == null) {
                     cmp.innerText = (offset * 100 / file.size).toFixed(0) + "%";
@@ -120,14 +102,11 @@ const char *index_html PROGMEM = R"====(
             </script>
         </head>
     <body>
-        <form>
-            <label><b><h1>Nextion display updater</h1></b></label><br><br>
-            <input type="file" name="file" onchange="valCheck()"><br><br><br>
-            <input type="button" id="button" value="Start upload" onclick="sendData()" disabled><br><br>
-            <span id="uploading" style="display:none;">Upload in process...</span><br>
-	        <label id="completed"></label><br>
-            Chunk size: <input type="text" name="partSize" value="1024" size="4">
-        </form>    
+        <input type="file" name="file" onchange="valCheck()"><br><br>
+        <input type="button" id="button" value="upload" onclick="sendData()" disabled><br><br>
+        <span id="uploading" style="display:none;">Upload in process...</span><br>
+	      <label id="completed"></label><br>
+        Chunk size: <input type="text" name="partSize" value="1024" size="4">
     </body>
 </html>
 )====";

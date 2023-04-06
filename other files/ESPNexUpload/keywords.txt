@@ -1,3 +1,0 @@
-ESPNexUpload	KEYWORD1
-upload	KEYWORD2
-prepareUpload	KEYWORD2
