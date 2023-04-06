@@ -121,11 +121,11 @@ const char *index_html PROGMEM = R"====(
         </head>
     <body>
         <form>
-            <label><b><h1>Nextion display updater</h1></b></label><br><br>
+            <label><b><h1>Nextion display updater</h1></b></label><br>
             <input type="file" name="file" onchange="valCheck()"><br><br><br>
-            <input type="button" id="button" value="Start upload" onclick="sendData()" disabled><br><br>
+            <input type="button" id="button" value="Start upload" onclick="sendData()" disabled><br><br><br>
             <span id="uploading" style="display:none;">Upload in process...</span><br>
-	        <label id="completed"></label><br>
+	        <br><label id="completed"></label><br><br>
             Chunk size: <input type="text" name="partSize" value="1024" size="4">
         </form>    
     </body>
