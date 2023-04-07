@@ -1,20 +1,35 @@
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
 #include <Update.h>
+#include <NextionUploadWIFI.h>
 
+
+#define CHECK_STATUS_1 "Baudrate kiolvasás nem sikerült!"
+#define CHECK_STATUS_2 "Baudrate megváltoztatás nem sikerült!"
+#define UPLOAD_STATUS "Kapcsolat megszakadt!"
+#define SERIAL2_BAUD 115200
+#define SERIAL2_RX_PIN GPIO_NUM_41
+#define SERIAL2_TX_PIN GPIO_NUM_42
+#define SERVER_PORT 80
 
 // Wifi adatok
 const char *ssid = "ESP_proba";
 const char *password = "123456789";
-IPAddress local_IP(192, 168, 1, 100);
-IPAddress gateway(192, 168, 1, 100);
-String FW_VERSION = "1.0";
+IPAddress local_IP(192, 168, 10, 100);
+IPAddress gateway(192, 168, 10, 100);
+String FW_VERSION = "2.0";
 bool espShouldReboot;
-AsyncWebServer server(80);
+AsyncWebServer server(SERVER_PORT);
+// Create Nextion WiFi Uploader object
+NextionUploadWIFI nextion(SERIAL2_BAUD, SERIAL2_RX_PIN, SERIAL2_TX_PIN);
 
-// NexUploadWIFI nex_uploader(115200);
-int fileSize  = 0;
-bool result   = true;
+
+uint32_t filesize;
+uint8_t check_status;
+bool upload_status;
+String check_reason = "";
+String error_reason = "";
+
 bool nextionShouldReboot;
 uint32_t time_now; 
 uint32_t period = 100;
@@ -25,22 +40,17 @@ float gyorsulas;
 String VizhofoktoString();
 String ImaptoString();
 String GyorsulastoString();
+
 void notFoundResponse(AsyncWebServerRequest *request) {
   request->send(404, "text/plain", "Not found");
 }
-
-void handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
-  Serial.println("Beleptunk ide");
-  Serial.println(len);
-  
-}
 //*********************************************************************KIVÁLASZTÓ MENÜ***********************
-const char* index_html PROGMEM = R"(
+const char* index_html PROGMEM = R"====(
 <!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv='Content-Type' content='text/html; charset=utf-8'/>
-    <meta name='viewport' content='width=device-width, initial-scale=1, minimum-scale=1.0, shrink-to-fit=no'>
+    <html lang="en">
+    <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Autóműszerfal web menü</title>
     <style>
       body {
@@ -86,15 +96,15 @@ const char* index_html PROGMEM = R"(
     </form>
 </body>
 </html>
-)";
+)====";
 //*************************************************************************ESP32 FRISSITO OLDALAK*************************************************************************************
 // ESP32 frissítő oldal első része
-const char* esp_header_html PROGMEM = R"(
+const char* esp_header_html PROGMEM = R"====(
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta http-equiv='Content-Type' content='text/html; charset=utf-8'/>
-    <meta name='viewport' content='width=device-width, initial-scale=1, minimum-scale=1.0, shrink-to-fit=no'>
+  <html lang="en">
+    <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>ESP32 processzor frissítő</title>
       <style>
         body {
@@ -115,22 +125,38 @@ const char* esp_header_html PROGMEM = R"(
           border-radius: 8px;
         }
       </style>
+      <script>
+        function valSubmit() {
+            var file = document.querySelector("input[name=update]").files[0];
+            if (!file) {
+                alert("Válassz fájlt!");
+                return false;
+            } 
+            else if (!file.name.endsWith(".bin")) {
+                alert("Helytelen fájl kiterjesztés. Csak .bin fájl megengedett!");
+                var fileInput = document.querySelector("input[name=update]");
+                fileInput.value = null;
+                return false;
+            }
+            return true;
+        }
+    </script>
   </head>
   <body>
-    <form method='POST' action='/esp_update' enctype='multipart/form-data'>
+    <form method='POST' action='/esp_update' enctype='multipart/form-data' onsubmit='return valSubmit()'>
       <label><b><h1>ESP32 processzor frissítő</h1></b></label>
-)";
+)====";
 // ESP32 frissítő oldal Verziószám utáni része
-const char* esp_update_html PROGMEM = R"(
-      <input accept='.bin' type='file' name='update' required>
+const char* esp_update_html PROGMEM = R"====(
+      <input accept='.bin' type='file' name='update'>
       <h5>Csak .bin fájl engedélyezett</h5>
-      <input type='submit' value='Frissítés kezdés'>
+      <input type='submit' value='Frissítés kezdése'>
     </form>
   </body>
 </html>
-)";
+)====";
 // ESP32 frissítés sikeres oldal
-const char* esp_update_success_html PROGMEM = R"(
+const char* esp_update_success_html PROGMEM = R"====(
 <!DOCTYPE html>
   <html>
     <head>
@@ -158,13 +184,13 @@ const char* esp_update_success_html PROGMEM = R"(
       <form>
         <h1><strong>Frissítés sikeres</strong></h1>
         <h3>Az ESP32 újraindul!</h3>
-        <input type="button" class="btn" value="Vissza a kezdőoldalra" onclick="window.location.href='/esp'"/>
+        <input type="button" class="btn" value="Vissza" onclick="window.location.href='/esp'"/>
       </form>
     </body>
   </html>
-)";
+)====";
 // ESP32 frissítés sikertelen oldal
-const char* esp_update_failed_html PROGMEM = R"(
+const char* esp_update_failed_html PROGMEM = R"====(
 <!DOCTYPE html>
   <html>
     <head>
@@ -191,19 +217,198 @@ const char* esp_update_failed_html PROGMEM = R"(
     <body>
       <form>
         <h1><strong>Frissítés sikertelen</strong></h1>
-        <input type="button" class="btn" value="Vissza a kezdőoldalra" onclick="window.location.href='/esp'"/>
+        <input type="button" class="btn" value="Vissza" onclick="window.location.href='/esp'"/>
       </form>
     </body>
   </html>
-)";
+)====";
 //*******************************************************NEXTION FRISSÍTŐ OLDALAK******************************************************************************************
+// Nextion update index page
+const char *nextion_index_html PROGMEM = R"====(
+<!DOCTYPE html>
+    <html lang="en">
+        <head>
+            <meta http-equiv="content-type" content="text/html; charset=utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>Nextion kijelző frissítő</title>
+            <style>
+                body {
+                    background: DodgerBlue;
+                    font-family: sans-serif;
+                }
+                form {
+                    background: white;
+                    max-width: 450px;
+                    margin: 50px auto;
+                    padding: 100px;
+                    border-radius: 25px;
+                    text-align: center
+                }
+                    input[type="button"] {
+                    background-color: Green;
+                    padding: 10px 20px;
+                    border-radius: 8px;
+                    color: black;
+                }
+        </style>
+            <script>
+            var partSize = 100;
+            var file;
+            var cmp;
+            var offset = 0;
+            function valCheck() {
+                file = document.querySelector("input[name=file]").files[0];
+                partSize = parseInt(document.querySelector("input[name=partSize]").value);
+                cmp = document.getElementById("completed");
+                if (file) {
+                    if (file.name.endsWith(".tft")) {
+                        var xhttp = new XMLHttpRequest();
+                        xhttp.onreadystatechange = function(){
+                        if(xhttp.readyState == 4 && xhttp.status == 200) {
+                            document.getElementById("button").disabled = false;
+                        } 
+                        if(xhttp.readyState == 4 && xhttp.status == 302) {
+                            window.location.href = "/nextion_fail";
+                        }
+                    };
+                    sendInfo(xhttp, file.size);
+                    } else {
+                        alert("Helytelen fájl kiterjesztés. Csak .tft fájl megengedett!");
+                        var fileInput = document.querySelector("input[name=file]");
+                        fileInput.value = null;
+                    }
+                } else {
+                    alert("Válassz fájlt!");
+                }
+            }
+            function sendInfo(xmlHttp, size) {
+                xmlHttp.open("post", "/size");
+                xmlHttp.send(size);
+            }
+            function sendDataHandler(event) {
+                if (event.target.error == null) {
+                    cmp.innerText = (offset * 100 / file.size).toFixed(0) + "%";
+                    offset += event.target.result.byteLength;
+                } else {
+                    alert("Error: " + event.target.error);
+                    return;
+                }
+                var xmlHttp = new XMLHttpRequest();
+                xmlHttp.onreadystatechange = function() {
+                    if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+                        if (offset < file.size) {
+                            sendData();
+                        } else {
+                            window.location.href = "/nextion_success";
+                            cmp.innerText = "All data was sent";
+                        }
+                    }
+                    if ((xmlHttp.status == 302) || (xmlHttp.status == 404)) {
+                        window.location.href = "/nextion_fail";
+                    }
+                };        
+                xmlHttp.open("post", "/update");
+                xmlHttp.send(event.target.result);
+            }
+            function sendData() {
+                document.getElementById("button").disabled = true;
+                document.getElementById("uploading").style.display = "inline";
+                var reader = new FileReader();
+                var blob = file.slice(offset, partSize + offset);
+                reader.onload = sendDataHandler;
+                reader.readAsArrayBuffer(blob);
+            }
+            </script>
+        </head>
+    <body>
+        <form>
+            <label><b><h1>Nextion kijelző frissítő</h1></b></label><br>
+            <input type="file" name="file" onchange="valCheck()"><br>
+            <h5>Csak .tft fájl engedélyezett</h5>
+            <input type="button" id="button" value="Frissítés kezdése" onclick="sendData()" disabled><br><br><br>
+            <span id="uploading" style="display:none;">Frissítés folyamatban...</span><br>
+	          <br><label id="completed"></label><br><br>
+            Darabolási méret: <input type="text" name="partSize" value="1024" size="4">
+        </form>    
+    </body>
+</html>
+)====";
 
+// Nextion update error header
+const char *nextion_update_failed_header_html PROGMEM = R"====(
+<!DOCTYPE html>
+ <html lang="en">
+    <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Nextion kijelző frissítő</title>
+    <style>
+      body {
+        background: DodgerBlue;
+      }
+      form {
+        background: Red;
+        max-width: 500px;
+        margin: 50px auto;
+        padding: 30px;
+        border-radius: 25px;
+        text-align: center
+      }
+      .btn {
+        padding: 10px 40px;
+        border-radius: 10px;
+      }
+      </style>
+    </head>
+    <body>
+      <form>
+)====";
 
-
-
-
+const char *nextion_update_failed_footer_html PROGMEM = R"====(
+        <input type="button" class="btn" value="Vissza" onclick="window.location.href='/nextion'">
+      </form>
+    </body>
+  </html>
+)====";
+// Nextion update success
+const char *nextion_update_success_html PROGMEM = R"====(
+<!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta http-equiv="content-type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Nextion kijelző frissítő</title>
+      <style>
+        body {
+          background: DodgerBlue;
+        }
+        form {
+          background: Green;
+          max-width: 500px;
+          margin: 50px auto;
+          padding: 30px;
+          border-radius: 25px;
+          text-align: center
+        }
+	      .btn {
+          padding: 10px 40px;
+          border-radius: 10px;
+        }
+      </style>
+    </head>
+    <body>
+      <form>
+        <h1><strong>Successfull update!</strong></h1>
+        <br>
+        <br>
+        <h3>Display will restart!</h3>
+        <input type="button" class="btn" value="Vissza" onclick="window.location.href='/'">
+      </form>
+    </body>
+  </html>
+)====";
 //*************************************************GRAFIKONOK*********************************************
-const char* grafikon_html = R"(
+const char* grafikon_html PROGMEM = R"====(
 <!DOCTYPE HTML>
 <html>
   <head>
@@ -426,7 +631,7 @@ const char* grafikon_html = R"(
     }, 1000 ) ;
   </script>
 </html>
-)";
+)====";
 //**************************************************************************************************************************************************************************
 void setup() {
     // Serial port inicializálása
@@ -455,7 +660,7 @@ void setup() {
   	request->send(response); }, 
     [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
     if (!index) {
-			Serial.printf("Start update: %s\n", filename.c_str());
+			//Serial.printf("Start update: %s\n", filename.c_str());
 			if (!Update.begin((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000)) {
 				Update.printError(Serial);
 			}
@@ -467,7 +672,7 @@ void setup() {
 		}
 		if (final) {
 			if (Update.end(true)) {
-				Serial.printf("Update was successfull: %uB\n", index + len);
+				//Serial.printf("Update was successfull: %uB\n", index + len);
 			}
 			else {
 				Update.printError(Serial);
@@ -475,26 +680,62 @@ void setup() {
 		} 
 	});
 //***********************************************NEXTION UPDATE************************************************************************************************* 
+// Index page
+    server.on("/nextion", HTTP_GET, [](AsyncWebServerRequest *request) {
+        AsyncResponseStream *response = request->beginResponseStream("text/html");
+        response->print(nextion_index_html);
+        request->send(response); 
+    });
+// Fail page
+    server.on("/nextion_fail", HTTP_GET, [](AsyncWebServerRequest *request) {
+		String view_html;
+		view_html += nextion_update_failed_header_html;
+		view_html += "<label><h3>Hiba oka: " + error_reason + "</h3></label>";
+		view_html += nextion_update_failed_footer_html;
+        request->send(302, "text/html", view_html);
+    });
+// Success page
+    server.on("/nextion_success", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->send(302, "text/html", nextion_update_success_html);
+    });
+// Receive Firmware file size
+    server.on("/size", HTTP_POST, [](AsyncWebServerRequest *request) {},
+    NULL,
+    [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+        {
+            filesize = atoi((const char *)data);
+            check_status = nextion.check(filesize);
+            if (check_status == 1) {
+                error_reason = CHECK_STATUS_1;
+                request->redirect("/nextion_fail");
+            }
+            if (check_status == 2) {
+                error_reason = CHECK_STATUS_2;
+                request->redirect("/nextion_fail");
+            }
+            if (check_status == 0) {
+                error_reason = "";
+                request->send(200);
+            }
+    });
 
+    // Receive Firmware cunks and flash Nextion display
+    server.on("/update", HTTP_POST, [](AsyncWebServerRequest *request) {},
+    NULL,
+    [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+        {
+        if(len) {
+            upload_status = nextion.uploadTftFile(data, len);
+            if (!upload_status) {
+                error_reason = UPLOAD_STATUS;
+                request->redirect("/nextion_fail");
+            }
+            else {
+                request->send(200);
+            }
+        }
+    });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// NotFound
-  server.onNotFound(notFoundResponse);
 //**************************************GRAFIKONOK************************************************************
 // Oldal megnyitása
   server.on("/grafikon", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -512,8 +753,10 @@ void setup() {
   server.on("/gyorsulas", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send_P(200, "text/plain", GyorsulastoString().c_str());
   });
+  // NotFound
+  server.onNotFound(notFoundResponse);
 // Szerverindítása
-server.begin();
+  server.begin();
 //server.end();
 
 }
@@ -559,6 +802,7 @@ void loop()
 		delay(100);
 		ESP.restart();
 	}
+  
   if(millis() >= time_now + period){
     time_now += period;
     vizhofok += 50.1;

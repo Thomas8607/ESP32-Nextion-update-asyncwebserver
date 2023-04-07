@@ -50,7 +50,7 @@ public: /* methods */
      *
      * @return none.
      */
-    String check(uint32_t size);
+    uint8_t check(uint32_t size);
 
     /**
      * start dowload tft file to nextion. 

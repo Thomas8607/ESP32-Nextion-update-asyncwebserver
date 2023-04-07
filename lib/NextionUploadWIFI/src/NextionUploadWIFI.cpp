@@ -27,17 +27,19 @@ NextionUploadWIFI::NextionUploadWIFI(uint32_t upload_baudrate, gpio_num_t rx_pin
     _next_tx_pin = tx_pin;
 }
 
-String NextionUploadWIFI::check(uint32_t size) {
+uint8_t NextionUploadWIFI::check(uint32_t size) {
     _undownloadByte = size;
     if(_getBaudrate() == 0) {
         //debugSerial.println("get baudrate error");
-        return "Get baudrate error";
+        // "Get baudrate error";
+        return 1;
     }
     if(!_setDownloadBaudrate(_upload_baudrate)) {
         //debugSerial.println("modify baudrate error");
-        return "Modify baudrate error";
+        // "Modify baudrate error";
+        return 2;
     }
-    return "0";
+    return 0;
 }
 
 uint32_t NextionUploadWIFI::_getBaudrate(void) {
