@@ -501,7 +501,7 @@ void setup() {
     });
   // NotFound
   server.onNotFound(notFoundResponse);
-  // Szerverindítása
+  // Szerver indítása
   server.begin();
   //server.end();
 }
