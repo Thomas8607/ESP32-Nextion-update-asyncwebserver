@@ -1,8 +1,3 @@
-#ifndef INDEX_H
-#define INDEX_H
-
-
-const char MAIN_page[] PROGMEM = R"=====(
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -185,7 +180,6 @@ const char MAIN_page[] PROGMEM = R"=====(
             document.getElementById('mincooltemp').textContent = minVizhofok.toFixed(1);
             document.getElementById('maxcooltemp').textContent = maxVizhofok.toFixed(1);
             document.getElementById("cooltemp").innerHTML = y.toFixed(1);
-
             if (lastValueImap === null) {
                 minImap = y2;
                 maxImap = y2;
@@ -207,5 +201,3 @@ const char MAIN_page[] PROGMEM = R"=====(
     </script>
 </body>
 </html>
-)=====";
-#endif
