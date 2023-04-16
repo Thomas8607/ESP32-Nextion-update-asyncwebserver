@@ -469,6 +469,8 @@ const char* grafikon_html PROGMEM = R"====(
     <div>Maximum érték: <span id='max-Gyorsulas'></span>
     <button id='reset-button-Gyorsulas'>Törlés</button></div>
   </body>
+
+  
   <script>
     var chartVizhofok = new Highcharts.Chart({
       chart:{ renderTo : 'chart-Vizhofok' },
@@ -502,12 +504,16 @@ const char* grafikon_html PROGMEM = R"====(
       document.getElementById('min-Vizhofok').textContent = '';
       document.getElementById('max-Vizhofok').textContent = '';
     });
+
+
     setInterval(function ( ) {
       var xhttp = new XMLHttpRequest();
       xhttp.onreadystatechange = function() {
         if (this.readyState == 4 && this.status == 200) {
           var x = (new Date()).getTime(),
           y = parseFloat(this.responseText);
+
+
           if (lastValueVizhofok === null) {
             minVizhofok = y;
             maxVizhofok = y;
@@ -530,6 +536,25 @@ const char* grafikon_html PROGMEM = R"====(
       xhttp.open('GET', '/vizhofok', true);
       xhttp.send();
     }, 1000 ) ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     var chartImap = new Highcharts.Chart({
       chart:{ renderTo:'chart-Imap' },
@@ -625,6 +650,10 @@ const char* grafikon_html PROGMEM = R"====(
       document.getElementById('min-Gyorsulas').textContent = '';
       document.getElementById('max-Gyorsulas').textContent = '';
     });
+
+
+
+    
     setInterval(function ( ) {
       var xhttp = new XMLHttpRequest();
       xhttp.onreadystatechange = function() {

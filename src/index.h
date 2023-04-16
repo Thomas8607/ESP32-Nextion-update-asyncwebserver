@@ -3,245 +3,212 @@
 
 
 const char MAIN_page[] PROGMEM = R"=====(
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>ESP32-asyncServer-data</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="ESP32 async webserver data sensor">
-    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <title>ESP32 Grafikonok</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <script src='https://code.highcharts.com/highcharts.js'></script>
+    <script src='https://code.highcharts.com/modules/exporting.js'></script>
+    <script src='https://code.highcharts.com/modules/export-data.js'></script>
     <style>
-        html {
+      html {
             text-align: center;
             font-family: Arial, Helvetica, sans-serif;
         }
         #title {
-            margin: 0px auto;
+            margin: 20px auto;
             text-decoration: underline;
         }
-        #data { margin: 5px auto;}
-        #led { margin-bottom: -20px;}
+        #data {
+            font-size: 15px;
+            text-align: left;
+            margin: 5px auto;
+        }
+        #button {
+            font-size: 15px;
+            text-align: left;
+            margin: 5px auto;
+        }
     </style>
 </head>
 <body>
-    <h2 id="title">ESP32 async server with websockets</h2>
-    <p id="data">
-        <button id="ledButton" onclick="changeLed()" disabled>Toggle LED</button>
-        <canvas id="led" width="50" height="50"></canvas>
-        <span>SENSORS: Temperature: </span><span id="temperature">0</span><span>°C. Illuminance: </span><span
-            id="illuminance">0</span><span> lx.</span>
-    </p>
-
-    <div class="chart-container" style="position: relative; width:95vw; margin:auto">
-        <canvas id="temperatureChart" width="800" height="200" aria-label="Temperature chart" role="img"></canvas>
-    </div>
+    <h3 id="title">Adat megjelenítés</h3>
     <br>
-    <div class="chart-container" style="position: relative; width:95vw; margin:auto">
-        <canvas id="illuminanceChart" width="800" height="200" aria-label="Illuminance chart" role="img"></canvas>
-    </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.js"
-        integrity="sha512-QEiC894KVkN9Tsoi6+mKf8HaCLJvyA6QIRzY5KrfINXYuP9NxdIkRQhGq3BZi0J4I7V5SidGM3XUQ5wFiMDuWg=="
-        crossorigin="anonymous"></script>
-    <script type="text/javascript">
-        var counter = 0;
-        var HTMLbutton = document.getElementById("ledButton");
-        var led = false;
-
-        // Draw LED
-        var contextLED = document.getElementById("led").getContext("2d");
-        contextLED.arc(25, 25, 15, 0, Math.PI * 2, false);
-        contextLED.lineWidth = 3;
-        contextLED.strokeStyle = "black";
-        contextLED.fillStyle = "black";
-        contextLED.stroke();
-        contextLED.fill();
-
-        var ctxTemp = document.getElementById('temperatureChart').getContext('2d');
-        var temperatureChart = new Chart(ctxTemp, {
-            type: 'line',
-            data: {
-                //labels: [1, 2, 3],
-                datasets: [{
-                    label: 'Temperature',
-                    borderColor: 'red',
-                    backgroundColor: 'red',
-                    borderWidth: 2,
-                    pointRadius: 1,
-                    fill: false
-                }]
+    <p id="data">
+    <span>Vízhőmérséklet: </span><span id="cooltemp">0</span><span> °C</span> &emsp;
+    <span>Min. érték: </span><span id="mincooltemp">0</span><span> °C</span> &emsp;
+    <span>Max. érték: </span><span id="maxcooltemp">0</span><span> °C</span> &emsp;
+    <input type="button" id="coolantresetbutton" value="Törlés"> &emsp;&emsp;
+    <div id='coolantChartContainer' class='container' style="position: relative; width:90vw; margin:auto"></div>
+    </p>
+    <br>
+    <hr>
+    <br>
+    <p id="data">
+    <span>Imap nyomás: </span><span id="imap">0</span><span> bar</span> &emsp;
+    <span>Min. érték: </span><span id="minimap">0</span><span> bar</span> &emsp;
+    <span>Max. érték: </span><span id="maximap">0</span><span> bar</span> &emsp;
+    <input type="button" id="imapresetbutton" value="Törlés"> &emsp;&emsp;
+    <div id='imapChartContainer' class='container' style="position: relative; width:90vw; margin:auto"></div>
+    </p>
+    <script>
+        // Hűtőfolyadék grafikon inicializálása
+        var coolantChart = Highcharts.chart('coolantChartContainer', {
+            turboThreshold: 0,
+            title: {
+                text: null, // Cím kikapcsolása
+                enabled: false // Cím kikapcsolása
             },
-            options: {
-                legend: {
-                    display: false
-                },  
-                responsive: true,
-                scales: {
-                    xAxes: [{
-						display: true,
-                        ticks: {
-                            display: true
-                        }
-                    }],
-                    yAxes: [{
-                        display: true,
-						scaleLabel: {
-							display: true,
-							labelString: 'Temperature (ºC)'
-                        },
-                        ticks: {
-                            min: -20,
-                            max: 150
-                        }
-					}]
+            series: [{
+                showInLegend: false,
+                data: [],
+                marker: {
+                    enabled: false // Pontok jelölésének kikapcsolása
+                }
+            }],
+            plotOptions: {
+                line: { animation: false,
+                dataLabels: { enabled: false }
                 },
-                showLines: true,
-                elements: {
-                    line: {
-                        tension: 0  // disables bezier curves
+                series: { color: '#059e8a' }
+            },
+            xAxis: { type: 'datetime',
+                dateTimeLabelFormats: { second: '%H:%M:%S' }
+            },
+            yAxis: {
+                title: { text: 'hőmérséklet (ºC)' }
+            },
+            credits: { enabled: false },
+            exporting: { // Exportálás beállításai
+                buttons: {
+                    contextButton: {
+                        menuItems: [{
+                        text: 'Export to PDF', // PDF export menüpont
+                            onclick: function () {
+                                this.exportChart({
+                                type: 'application/pdf'
+                                });
+                            }
+                        }]
                     }
-                },
-                animation: {
-                    duration: 0  // general animation time
-                },
-                hover: {
-                    animationDuration: 0  // duration of animations when hovering an item
-                },
-                responsiveAnimationDuration: 0  // animation duration after a resize
+                }
             }
         });
-
-        var ctxIllum = document.getElementById('illuminanceChart').getContext('2d');
-        var illuminanceChart = new Chart(ctxIllum, {
-            type: 'line',
-            data: {
-                datasets: [{
-                    label: 'Illuminance',
-                    borderColor: 'gold',
-                    backgroundColor: 'gold',
-                    borderWidth: 2,
-                    pointRadius: 1,
-                    fill: false
-                }]
+        var lastValueVizhofok = null;
+        var minVizhofok = null;
+        var maxVizhofok = null;
+        document.getElementById('coolantresetbutton').addEventListener('click', function() {
+            coolantChart.series[0].setData([], false);
+            lastValueVizhofok = null;
+            minVizhofok = null;
+            maxVizhofok = null;
+            document.getElementById('mincooltemp').textContent = '';
+            document.getElementById('maxcooltemp').textContent = '';
+        });
+        // IMAP grafikon inicializálása
+        var imapChart = Highcharts.chart('imapChartContainer', {
+            title: {
+                text: null, // Cím kikapcsolása
+                enabled: false // Cím kikapcsolása
             },
-            options: {
-                legend: {
-                    display: false
-                },                
-                responsive: true,
-                scales: {
-                    xAxes: [{
-                        display: true,
-                        ticks: {
-                            display: true
-                        }
-                    }],
-                    yAxes: [{
-						display: true,
-						scaleLabel: {
-							display: true,
-							labelString: 'Illuminance (lux)'
-						},
-                        ticks: {
-                            min: 0,
-                            max: 50
-                        }
-					}]
+            series: [{
+                showInLegend: false,
+                data: [],
+                marker: {
+                    enabled: false // Pontok jelölésének kikapcsolása
+                    }
+            }],
+            plotOptions: {
+                line: { animation: false,
+                dataLabels: { enabled: false }
                 },
-                showLines: true,
-                animation: {
-                    duration: 0  // general animation time
-                },
-                hover: {
-                    animationDuration: 0  // duration of animations when hovering an item
-                },
-                responsiveAnimationDuration: 0  // animation duration after a resize
+                series: { color: '#059e8a' }
+            },
+            xAxis: { type: 'datetime',
+                dateTimeLabelFormats: { second: '%H:%M:%S' }
+            },
+            yAxis: {
+                title: { text: 'nyomás (bar)' }
+            },
+            credits: { enabled: false },
+            exporting: { // Exportálás beállításai
+                buttons: {
+                    contextButton: {
+                        menuItems: [{
+                        text: 'Export to PDF', // PDF export menüpont
+                            onclick: function () {
+                                this.exportChart({
+                                type: 'application/pdf'
+                                });
+                            }
+                        }]
+                    }
+                }
             }
         });
+        var lastValueImap = null;
+        var minImap = null;
+        var maxImap = null;
+        document.getElementById('imapresetbutton').addEventListener('click', function() {
+            imapChart.series[0].setData([], false);
+            lastValueImap = null;
+            minImap = null;
+            maxImap = null;
+            document.getElementById('minimap').textContent = '';
+            document.getElementById('maximap').textContent = '';
+        });
 
-        var webSocket = new WebSocket("ws://192.168.10.100/ws");
-        webSocket.onopen = function (event) {
-            HTMLbutton.disabled = false;
-        }
-        webSocket.onclose = function (event) {
-            HTMLbuton.disabled = true;
-        }
-        webSocket.onmessage = function (event) {
-            let jsonObj = JSON.parse(event.data);
-            // LED change
-            if ((jsonObj["ledStatus"] != undefined) && (jsonObj["ledStatus"] != led)) {
-                led = jsonObj["ledStatus"];
-                updateLed();
-            }
-            // Sensors update
+
+        // Websocket üzenetek fogadása és feldolgozása
+        var ws = new WebSocket("ws://" + window.location.hostname + "/ws");
+        ws.onmessage = function(event) {
+            var data = JSON.parse(event.data);
+            console.log('Adatok érkeztek:', data);
+            var x = (new Date()).getTime();
+            var y = data.coolanttemp;
+            var y2 = data.imap;
+            if (lastValueVizhofok === null) {
+                minVizhofok = y;
+                maxVizhofok = y;
+            } 
             else {
-                let temp = jsonObj["temperature"];
-                let illum = jsonObj["illuminance"];
-                updateValues(temp, illum);
-                updateCharts(temp, illum);
+                minVizhofok = Math.min(minVizhofok, y);
+                maxVizhofok = Math.max(maxVizhofok, y);
             }
-        }
-
-        function changeLed() {
-            webSocket.send("C");
-        }
-        
-        function updateLed() {
-            if (led){
-                contextLED.fillStyle = "red";
-                contextLED.fill();
-            }
-            else {
-                contextLED.fillStyle = "black";
-                contextLED.fill();
-            }
-        }
-
-        //window.setInterval(updateValues, 10); // Update values used when testing
-
-        function updateValues(temperature, illuminance) {
-            //temperature = Math.floor(Math.random() * 100); // Testing
-            //illuminance = Math.floor(Math.random() * 100); // Testing
-            document.getElementById("temperature").innerHTML = temperature;
-            document.getElementById("illuminance").innerHTML = illuminance;
-        }
-  
-        function updateCharts(temperature, illuminance) {
-            let date  = new Date();
-            let timeDislpayed = date.getMinutes().toString().padStart(2, '0') + ":" + date.getSeconds().toString().padStart(2, '0');
-            addData(temperatureChart, timeDislpayed, [temperature]);
-            addData(illuminanceChart, timeDislpayed, [illuminance]);
-            // Remove values from chart after 100 data
-            if (counter < 100){
-                counter++;
+            if (coolantChart.series[0].data.length < 80) {
+                coolantChart.series[0].addPoint([x, y], true, false, false);
             }
             else {
-                removeData(temperatureChart);
-                removeData(illuminanceChart); 
-            }   
-        }
-                
-        function addData(chart, label, data) {
-            chart.data.labels.push(label);
-            chart.data.datasets.forEach((dataset) => {
-                dataset.data.push(data);
-            });
-            chart.update();
-        }
+                coolantChart.series[0].addPoint([x, y], true, true, false);
+            }
+            lastValueVizhofok = y;
+            document.getElementById('mincooltemp').textContent = minVizhofok.toFixed(1);
+            document.getElementById('maxcooltemp').textContent = maxVizhofok.toFixed(1);
+            document.getElementById("cooltemp").innerHTML = y.toFixed(1);
 
-        function removeData(chart) {
-            chart.data.labels.shift();
-            chart.data.datasets.forEach((dataset) => {
-                dataset.data.shift();
-            });
-            chart.update();
-        }
+            if (lastValueImap === null) {
+                minImap = y2;
+                maxImap = y2;
+            } 
+            else {
+                minImap = Math.min(minImap, y2);
+                maxImap = Math.max(maxImap, y2);
+            }
+            if (imapChart.series[0].data.length < 80) {
+                imapChart.series[0].addPoint([x, y2], true, false, false);
+            } else {
+                imapChart.series[0].addPoint([x, y2], true, true, false);
+            }
+            lastValueImap = y2;
+            document.getElementById('minimap').textContent = minImap.toFixed(1);
+            document.getElementById('maximap').textContent = maxImap.toFixed(1);
+            document.getElementById("imap").innerHTML = y2.toFixed(1);
+        };
     </script>
 </body>
 </html>
-
 )=====";
 
 #endif
