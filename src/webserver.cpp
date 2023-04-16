@@ -28,7 +28,15 @@ void setup() {
     WiFi.softAPConfig(local_IP, gateway, IPAddress(255, 255, 255, 0));
     Serial.println("AP IP címe: " + WiFi.softAPIP().toString());
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-        request->send_P(200, "text/html", MAIN_page);
+        request->send_P(200, "text/html", index_html);
+    });
+    server.on("/highcharts.js", HTTP_GET, [](AsyncWebServerRequest *request){
+        AsyncWebServerResponse *response = request->beginResponse_P(200, "text/javascript", highcharts_js);
+        request->send(response);
+    });
+    server.on("/exporting.js", HTTP_GET, [](AsyncWebServerRequest *request){
+        AsyncWebServerResponse *response = request->beginResponse_P(200, "text/javascript", exporting_js);
+        request->send(response);
     });
     server.onNotFound([](AsyncWebServerRequest *request) {
         request->send(404, "text/plain", "Not found");
