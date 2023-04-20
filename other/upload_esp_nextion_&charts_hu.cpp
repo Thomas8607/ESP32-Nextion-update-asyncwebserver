@@ -577,6 +577,11 @@ const char* grafikon_html PROGMEM = R"====(
       },
       credits: { enabled: false }
     });
+
+
+
+
+    
     var lastValueImap = null;
     var minImap = null;
     var maxImap = null;

@@ -2,6 +2,10 @@
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include "index.h"
+#include "highcharts.h"
+#include "exporting.h"
+#include "offline_exporting.h"
+#include "jspdf.h"
 
 #define sinminVal 10.0
 #define sinmaxVal 90.0
@@ -38,6 +42,14 @@ void setup() {
         AsyncWebServerResponse *response = request->beginResponse_P(200, "text/javascript", exporting_js);
         request->send(response);
     });
+    server.on("/offline-exporting.js", HTTP_GET, [](AsyncWebServerRequest *request){
+        AsyncWebServerResponse *response = request->beginResponse_P(200, "text/javascript", offline_exporting_js);
+        request->send(response);
+    });
+    server.on("/jspdf.js", HTTP_GET, [](AsyncWebServerRequest *request){
+        AsyncWebServerResponse *response = request->beginResponse_P(200, "text/javascript", jspdf_js);
+        request->send(response);
+    });
     server.onNotFound([](AsyncWebServerRequest *request) {
         request->send(404, "text/plain", "Not found");
     });
@@ -49,11 +61,12 @@ void setup() {
 void loop() {
     sinValue = sinminVal + ((sinmaxVal - sinminVal) / 2) + ((sinmaxVal - sinminVal) / 2) * sin(millis() * 0.001);
     cosValue = cosminVal + ((cosmaxVal - cosminVal) / 2) + ((cosmaxVal - cosminVal) / 2) * cos(millis() * 0.001);
-    if (((millis() - lastUpdate) > 110) && data_stream) {
+    if (((millis() - lastUpdate) > 120) && data_stream) {
         lastUpdate = millis();
-        StaticJsonDocument<500> doc;
-        doc["imap"] = cosValue;
+        StaticJsonDocument<300> doc;
         doc["coolanttemp"] = sinValue;
+        doc["imap"] = cosValue;
+        doc["emap"] = sinValue;
         String output;
         serializeJson(doc, output);
         ws.textAll(output);
@@ -71,6 +84,6 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
         ws.cleanupClients();
     }
     else if (type == WS_EVT_DATA) {
-        // Adat érkezik
+        // Data received
     }
 }
