@@ -1,3 +1,4 @@
+#include "Arduino.h"
 #include <ArduinoJson.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
@@ -5,7 +6,6 @@
 #include "highcharts.h"
 #include "exporting.h"
 #include "offline_exporting.h"
-#include "jspdf.h"
 
 #define sinminVal 10.0
 #define sinmaxVal 90.0
@@ -46,10 +46,6 @@ void setup() {
         AsyncWebServerResponse *response = request->beginResponse_P(200, "text/javascript", offline_exporting_js);
         request->send(response);
     });
-    server.on("/jspdf.js", HTTP_GET, [](AsyncWebServerRequest *request){
-        AsyncWebServerResponse *response = request->beginResponse_P(200, "text/javascript", jspdf_js);
-        request->send(response);
-    });
     server.onNotFound([](AsyncWebServerRequest *request) {
         request->send(404, "text/plain", "Not found");
     });
@@ -66,7 +62,7 @@ void loop() {
         StaticJsonDocument<300> doc;
         doc["coolanttemp"] = sinValue;
         doc["imap"] = cosValue;
-        doc["emap"] = sinValue;
+        doc["emap"] = -0.1 * sinValue;
         String output;
         serializeJson(doc, output);
         ws.textAll(output);

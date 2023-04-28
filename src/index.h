@@ -39,7 +39,7 @@ const char index_html[] PROGMEM = R"====(
     <span>Vízhőmérséklet: </span><span id="cooltemp">0</span><span> °C</span> &emsp;
     <span>Min. érték: </span><span id="mincooltemp">0</span><span> °C</span> &emsp;
     <span>Max. érték: </span><span id="maxcooltemp">0</span><span> °C</span> &emsp;
-    <input type="button" id="coolantresetbutton" value="Törlés"> &emsp;&emsp;
+    <input type="button" id="coolantresetbutton" value="Törlés">
     <div id='coolantChartContainer' class='container' style="position: relative; width:90vw; margin:auto"></div>
     </p>
     <br>
@@ -49,7 +49,7 @@ const char index_html[] PROGMEM = R"====(
     <span>Imap nyomás: </span><span id="imap">0</span><span> bar</span> &emsp;
     <span>Min. érték: </span><span id="minimap">0</span><span> bar</span> &emsp;
     <span>Max. érték: </span><span id="maximap">0</span><span> bar</span> &emsp;
-    <input type="button" id="imapresetbutton" value="Törlés"> &emsp;&emsp;
+    <input type="button" id="imapresetbutton" value="Törlés">
     <div id='imapChartContainer' class='container' style="position: relative; width:90vw; margin:auto"></div>
     </p>
     <br>
@@ -59,15 +59,13 @@ const char index_html[] PROGMEM = R"====(
     <span>Emap nyomás: </span><span id="emap">0</span><span> bar</span> &emsp;
     <span>Min. érték: </span><span id="minemap">0</span><span> bar</span> &emsp;
     <span>Max. érték: </span><span id="maxemap">0</span><span> bar</span> &emsp;
-    <input type="button" id="emapresetbutton" value="Törlés"> &emsp;&emsp;
+    <input type="button" id="emapresetbutton" value="Törlés">
     <div id='emapChartContainer' class='container' style="position: relative; width:90vw; margin:auto"></div>
     </p>
     <script>
         // Hűtőfolyadék grafikon inicializálása
         var coolantChart = new Highcharts.chart({
-            chart: { 
-                renderTo : 'coolantChartContainer'
-            },
+            chart: {  renderTo : 'coolantChartContainer' },
             turboThreshold: 0,
             title: {
                 text: 'Hűtőfolyadék hőmérséklet',
@@ -76,9 +74,7 @@ const char index_html[] PROGMEM = R"====(
             series: [{
                 showInLegend: false,
                 data: [],
-                marker: {
-                    enabled: false
-                }
+                marker: { enabled: false }
             }],
             plotOptions: {
                 line: { animation: false,
@@ -92,7 +88,15 @@ const char index_html[] PROGMEM = R"====(
             yAxis: {
                 title: { text: 'hőmérséklet (ºC)' }
             },
-            credits: { enabled: false }
+            credits: { enabled: false },
+            accessibility: { enabled: false },
+            exporting: {
+                buttons: {
+                    contextButton: {
+                        menuItems: ["viewFullscreen", "downloadJPEG"]
+                    }
+                }
+            }
         });
         var lastValueVizhofok = null;
         var minVizhofok = null;
@@ -107,9 +111,7 @@ const char index_html[] PROGMEM = R"====(
         });
         // IMAP grafikon inicializálása
         var imapChart = new Highcharts.chart({
-            chart: {
-                renderTo: 'imapChartContainer'
-            },
+            chart: { renderTo: 'imapChartContainer' },
             title: {
                 text: 'Imap nyomás',
                 align: 'left'
@@ -117,9 +119,7 @@ const char index_html[] PROGMEM = R"====(
             series: [{
                 showInLegend: false,
                 data: [],
-                marker: {
-                    enabled: false
-                    }
+                marker: { enabled: false }
             }],
             plotOptions: {
                 line: { animation: false,
@@ -133,7 +133,15 @@ const char index_html[] PROGMEM = R"====(
             yAxis: {
                 title: { text: 'nyomás (bar)' }
             },
-            credits: { enabled: false }
+            credits: { enabled: false },
+            accessibility: { enabled: false },
+            exporting: {
+                buttons: {
+                    contextButton: {
+                        menuItems: ["viewFullscreen", "downloadJPEG"]
+                    }
+                }
+            }
         });
         var lastValueImap = null;
         var minImap = null;
@@ -148,9 +156,7 @@ const char index_html[] PROGMEM = R"====(
         });
         // EMAP grafikon inicializálása
         var emapChart = new Highcharts.chart({
-            chart: {
-                renderTo: 'emapChartContainer' 
-            },
+            chart: { renderTo: 'emapChartContainer' },
             title: {
                 text: 'Emap nyomás',
                 align: 'left'
@@ -158,9 +164,7 @@ const char index_html[] PROGMEM = R"====(
             series: [{
                 showInLegend: false,
                 data: [],
-                marker: {
-                    enabled: false
-                    }
+                marker: { enabled: false }
             }],
             plotOptions: {
                 line: { animation: false,
@@ -174,7 +178,15 @@ const char index_html[] PROGMEM = R"====(
             yAxis: {
                 title: { text: 'nyomás (bar)' }
             },
-            credits: { enabled: false }
+            credits: { enabled: false },
+            accessibility: { enabled: false },
+            exporting: {
+                buttons: {
+                    contextButton: {
+                        menuItems: ["viewFullscreen", "downloadJPEG"]
+                    }
+                }
+            }
         });
         var lastValueEmap = null;
         var minEmap = null;
@@ -207,7 +219,7 @@ const char index_html[] PROGMEM = R"====(
                 minVizhofok = Math.min(minVizhofok, y_coolant);
                 maxVizhofok = Math.max(maxVizhofok, y_coolant);
             }
-            if (coolantChart.series[0].data.length < 80) {
+            if (coolantChart.series[0].data.length < 150) {
                 coolantChart.series[0].addPoint([x_ido, y_coolant], true, false, false);
             }
             else {
@@ -226,7 +238,7 @@ const char index_html[] PROGMEM = R"====(
                 minImap = Math.min(minImap, y_imap);
                 maxImap = Math.max(maxImap, y_imap);
             }
-            if (imapChart.series[0].data.length < 80) {
+            if (imapChart.series[0].data.length < 150) {
                 imapChart.series[0].addPoint([x_ido, y_imap], true, false, false);
             } else {
                 imapChart.series[0].addPoint([x_ido, y_imap], true, true, false);
@@ -244,7 +256,7 @@ const char index_html[] PROGMEM = R"====(
                 minEmap = Math.min(minEmap, y_emap);
                 maxEmap = Math.max(maxEmap, y_emap);
             }
-            if (emapChart.series[0].data.length < 80) {
+            if (emapChart.series[0].data.length < 150) {
                 emapChart.series[0].addPoint([x_ido, y_emap], true, false, false);
             } else {
                 emapChart.series[0].addPoint([x_ido, y_emap], true, true, false);
