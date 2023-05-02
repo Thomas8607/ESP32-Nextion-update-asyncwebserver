@@ -1,9 +1,6 @@
-//#include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
-#include "index.h"
-#include "highcharts.h"
-#include "exporting.h"
-#include "offline_exporting.h"
+#include "charts_pages.h"
+
 
 #define sinminVal 10.0
 #define sinmaxVal 90.0
@@ -41,8 +38,8 @@ void setup() {
     WiFi.softAP(ssid, password);
     WiFi.softAPConfig(local_IP, gateway, IPAddress(255, 255, 255, 0));
     Serial.println("AP IP címe: " + WiFi.softAPIP().toString());
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-        request->send_P(200, "text/html", index_html);
+    server.on("/grafikon", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->send_P(200, "text/html", grafikon_html);
     });
     server.on("/highcharts.js", HTTP_GET, [](AsyncWebServerRequest *request){
         AsyncWebServerResponse *response = request->beginResponse_P(200, "text/javascript", highcharts_js);
