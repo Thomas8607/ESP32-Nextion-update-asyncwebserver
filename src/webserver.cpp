@@ -74,9 +74,9 @@ void loop() {
     if(!data_stream) {
         wsData.time = 0; 
     }
-    if (((millis() - lastUpdate) > 100) && data_stream) {
+    if (((millis() - lastUpdate) > 80) && data_stream) {
         lastUpdate = millis();
-        wsData.time += 100;
+        wsData.time += 80;
         uint8_t * bytePtr = (uint8_t*) &wsData;    
         ws.binaryAll(bytePtr, sizeof(wsData));
     }

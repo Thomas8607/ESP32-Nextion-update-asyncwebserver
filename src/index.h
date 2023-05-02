@@ -377,7 +377,7 @@ const char index_html[] PROGMEM = R"====(
             var emapPressure = dataView.getInt16(10, true)/100;
             var intakeairTemp = dataView.getInt16(12, true)/10;
             var acceleration = dataView.getInt16(14, true)/100;
-            console.log("X_Time: " + x_time + ", Rpm: " + rpm + ", CoolantTemp: " + coolantTemp + ", Imap: " + imapPressure + ", Emap: " + emapPressure + ", IntakeairTemp: " + intakeairTemp + ", Acceleration: " + acceleration);
+            //console.log("X_Time: " + x_time + ", Rpm: " + rpm + ", CoolantTemp: " + coolantTemp + ", Imap: " + imapPressure + ", Emap: " + emapPressure + ", IntakeairTemp: " + intakeairTemp + ", Acceleration: " + acceleration);
 // Rpm
             if (lastValueRpm === null) {
                 minRpm = rpm;
