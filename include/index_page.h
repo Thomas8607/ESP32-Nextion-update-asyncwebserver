@@ -18,7 +18,7 @@ const char* index_html PROGMEM = R"====(
         margin: 50px auto;
         padding: 30px;
         border-radius: 25px;
-        text-align: center 
+        text-align: center; 
       }
       .btn1 {
         background: LightGreen;
@@ -46,9 +46,12 @@ const char* index_html PROGMEM = R"====(
 <body>
     <form>
       <label><b><h1>Funkció kiválasztás</h1></b></label><br>
-      <input type="button" class="btn1" value="ESP32 processzor firmware frissítés" onclick="window.location.href='/esp'"/><br><br><br><br>
-      <input type="button" class="btn2" value="Kijelző firmware frissítés" onclick="window.location.href='/nextion'"/><br><br><br><br>
-      <input type="button" class="btn3" value="Grafikon kijelzés" onclick="window.location.href='/grafikon'"/>
+      <button class="btn1" onclick="window.location.href='/esp'">
+        <span style="white-space: pre-line;">ESP32 processzor firmware frissítés</span></button><br><br><br><br>
+      <button class="btn2" onclick="window.location.href='/nextion'">
+        <span style="white-space: pre-line;">Kijelző firmware frissítés</span></button><br><br><br><br>
+      <button class="btn3" onclick="window.location.href='/grafikon'">
+        <span style="white-space: pre-line;">Grafikon kijelzés</span></button>
     </form>
 </body>
 </html>
