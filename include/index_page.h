@@ -20,6 +20,9 @@ const char* index_html PROGMEM = R"====(
         border-radius: 25px;
         text-align: center; 
       }
+      input[type="button"] {
+			  white-space: break-spaces;
+		  }
       .btn1 {
         background: LightGreen;
         width: 100%;

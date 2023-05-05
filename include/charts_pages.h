@@ -82,16 +82,6 @@ const char grafikon_html[] PROGMEM = R"====(
     <input type="button" id="intakeresetbutton" value="Törlés">
     <div id='intakeChartContainer' class='container' style="position: relative; width:90vw; margin:auto"></div>
     </p>
-    <br>
-    <hr>
-    <br>
-    <p id="data">
-    <span>Gyorsulás: </span><span id="accel">0</span><span> G</span> &emsp;
-    <span>Min. érték: </span><span id="minaccel">0</span><span> G</span> &emsp;
-    <span>Max. érték: </span><span id="maxaccel">0</span><span> G</span> &emsp;
-    <input type="button" id="accelresetbutton" value="Törlés">
-    <div id='accelChartContainer' class='container' style="position: relative; width:90vw; margin:auto"></div>
-    </p>
     <script>
 // Fordulatszám grafikon inicializálása
         var rpmChart = new Highcharts.chart({
@@ -320,51 +310,6 @@ const char grafikon_html[] PROGMEM = R"====(
             document.getElementById('minintake').textContent = '';
             document.getElementById('maxintake').textContent = '';
         });
-// Acceleration grafikon inicializálása
-        var AccelerationChart = new Highcharts.chart({
-            chart: { renderTo: 'accelChartContainer' },
-            title: {
-                text: 'Gyorsulás',
-                align: 'left'
-            },
-            series: [{
-                showInLegend: false,
-                data: [],
-                marker: { enabled: false }
-            }],
-            plotOptions: {
-                line: { animation: false,
-                dataLabels: { enabled: false }
-                },
-                series: { color: '#059e8a' }
-            },
-            xAxis: { type: 'datetime',
-                dateTimeLabelFormats: { second: '%H:%M:%S' }
-            },
-            yAxis: {
-                title: { text: 'gyorsulás (G)' }
-            },
-            credits: { enabled: false },
-            accessibility: { enabled: false },
-            exporting: {
-                buttons: {
-                    contextButton: {
-                        menuItems: ["viewFullscreen", "downloadJPEG"]
-                    }
-                }
-            }
-        });
-        var lastValueAcceleration = null;
-        var minAcceleration = null;
-        var maxAcceleration = null;
-        document.getElementById('accelresetbutton').addEventListener('click', function() {
-            AccelerationChart.series[0].setData([], false);
-            lastValueAcceleration = null;
-            minAcceleration = null;
-            maxAcceleration = null;
-            document.getElementById('minaccel').textContent = '';
-            document.getElementById('maxaccel').textContent = '';
-        });
 // Websocket
         var webSocket = new WebSocket("ws://" + window.location.hostname + "/ws");
         webSocket.binaryType = 'arraybuffer';
@@ -376,8 +321,7 @@ const char grafikon_html[] PROGMEM = R"====(
             var imapPressure = dataView.getInt16(8, true)/100;
             var emapPressure = dataView.getInt16(10, true)/100;
             var intakeairTemp = dataView.getInt16(12, true)/10;
-            var acceleration = dataView.getInt16(14, true)/100;
-            //console.log("X_Time: " + x_time + ", Rpm: " + rpm + ", CoolantTemp: " + coolantTemp + ", Imap: " + imapPressure + ", Emap: " + emapPressure + ", IntakeairTemp: " + intakeairTemp + ", Acceleration: " + acceleration);
+            //console.log("X_Time: " + x_time + ", Rpm: " + rpm + ", CoolantTemp: " + coolantTemp + ", Imap: " + imapPressure + ", Emap: " + emapPressure + ", IntakeairTemp: " + intakeairTemp);
 // Rpm
             if (lastValueRpm === null) {
                 minRpm = rpm;
@@ -470,24 +414,6 @@ const char grafikon_html[] PROGMEM = R"====(
             document.getElementById('minintake').textContent = minIntakeAir;
             document.getElementById('maxintake').textContent = maxIntakeAir;
             document.getElementById("intake").innerHTML = intakeairTemp;
-// Acceleration
-            if (lastValueAcceleration === null) {
-                minAcceleration = acceleration;
-                maxAcceleration = acceleration;
-            } 
-            else {
-                minAcceleration = Math.min(minAcceleration, acceleration);
-                maxAcceleration = Math.max(maxAcceleration, acceleration);
-            }
-            if (AccelerationChart.series[0].data.length < 150) {
-                AccelerationChart.series[0].addPoint([x_time, acceleration], true, false, false);
-            } else {
-                AccelerationChart.series[0].addPoint([x_time, acceleration], true, true, false);
-            }
-            lastValueAcceleration = acceleration;
-            document.getElementById('minaccel').textContent = minAcceleration;
-            document.getElementById('maxaccel').textContent = maxAcceleration;
-            document.getElementById("accel").innerHTML = acceleration;
         };        
         webSocket.onopen = function(event) {
             console.log("WebSocket opened");

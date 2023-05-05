@@ -1,6 +1,6 @@
 #include <ESPAsyncWebServer.h>
-//#include <Update.h>
-//#include <NextionUploadWIFI.h>
+#include <Update.h>
+#include <NextionUploadWIFI.h>
 #include "esp_pages.h"
 #include "nextion_pages.h"
 #include "index_page.h"
@@ -21,10 +21,8 @@ struct Data {
     int16_t coolantTemp;
     int16_t imapPressure;
     int16_t emapPressure;
-    int16_t intakeairTemp;
-    int16_t acceleration; 
+    int16_t intakeairTemp; 
 };
-
 // Ideiglenes adatok
 #define sinminVal 10.0
 #define sinmaxVal 90.0
@@ -53,9 +51,9 @@ bool nextionShouldReboot;
 AsyncWebServer server(SERVER_PORT);
 AsyncWebSocket ws("/ws");
 // Create Nextion WiFi Uploader object
-//NextionUploadWIFI nextion(SERIAL2_BAUD, SERIAL2_RX_PIN, SERIAL2_TX_PIN);
+NextionUploadWIFI nextion(SERIAL2_BAUD, SERIAL2_RX_PIN, SERIAL2_TX_PIN);
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
-void WebsocketSending(const uint32_t interval, bool dataStream, uint16_t RpmData, float CoolantData, float ImapData, float EmapData, float IntakeairData, float AccelerationData);
+void WebsocketSending(const uint32_t interval, bool dataStream, uint16_t RpmData, float CoolantData, float ImapData, float EmapData, float IntakeairData);
 //**************************************************************************************************************************************************************************
 void setup() {
     // Serial port inicializálása
@@ -76,7 +74,6 @@ void setup() {
 		view_html += esp_update_html;
 		request->send(200, "text/html", view_html);
 	});
-    /*
 	// Ha a frissítés gombot megnyomjuk
 	server.on("/esp_update", HTTP_POST, [](AsyncWebServerRequest *request) {
   	espShouldReboot = !Update.hasError();
@@ -104,7 +101,6 @@ void setup() {
 			}
 		} 
 	});
-    */
 //***********************************************NEXTION UPDATE************************************************************************************************* 
 // Index page
     server.on("/nextion", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -128,7 +124,6 @@ void setup() {
     [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
         {
             filesize = atoi((const char *)data);
-            /*
             check_status = nextion.check(filesize);
             if (check_status == 1) {
                 error_reason = CHECK_STATUS_1;
@@ -142,7 +137,6 @@ void setup() {
                 error_reason = "";
                 request->send(200);
             }
-            */
     });
     // Receive Firmware cunks and flash Nextion display
     server.on("/update", HTTP_POST, [](AsyncWebServerRequest *request) {},
@@ -150,7 +144,7 @@ void setup() {
     [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
         {
         if(len) {
-            //upload_status = nextion.uploadTftFile(data, len);
+            upload_status = nextion.uploadTftFile(data, len);
             if (!upload_status) {
                 error_reason = UPLOAD_STATUS;
                 request->redirect("/nextion_fail");
@@ -192,10 +186,9 @@ void loop() {
     imap = cosminVal + ((cosmaxVal - cosminVal) / 2) + ((cosmaxVal - cosminVal) / 2) * cos(millis() * 0.001);
     emap = -1 * imap;
     intakeair = 125.2;
-    acceleration = -1.66;
     rpm = 3500;
 
-    WebsocketSending(INTERVAL, data_stream, rpm, coolant, imap, emap, intakeair, acceleration);
+    WebsocketSending(INTERVAL, data_stream, rpm, coolant, imap, emap, intakeair);
 }
 
 
@@ -211,7 +204,7 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
     }
 }
 
-void WebsocketSending(const uint32_t interval, bool dataStream, uint16_t RpmData, float CoolantData, float ImapData, float EmapData, float IntakeairData, float AccelerationData) {
+void WebsocketSending(const uint32_t interval, bool dataStream, uint16_t RpmData, float CoolantData, float ImapData, float EmapData, float IntakeairData) {
     static uint32_t lastUpdate = 0;
     static struct Data wsData;
     if(!dataStream) {
@@ -223,7 +216,6 @@ void WebsocketSending(const uint32_t interval, bool dataStream, uint16_t RpmData
         wsData.emapPressure = int16_t((EmapData) * 100);
         wsData.intakeairTemp = int16_t((IntakeairData) * 10);
         wsData.rpm = uint16_t(RpmData);
-        wsData.acceleration = int16_t((AccelerationData) * 100);
         wsData.time += INTERVAL;
         uint8_t * bytePtr = (uint8_t*) &wsData;    
         ws.binaryAll(bytePtr, sizeof(wsData));
