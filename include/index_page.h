@@ -26,6 +26,8 @@ const char* index_html PROGMEM = R"====(
         height: 100px;
         border-radius: 20px;
         font-size:20px;
+        text-align: center;
+        display:block;
       }
       .btn2 {
         background: LightBlue;
@@ -45,16 +47,22 @@ const char* index_html PROGMEM = R"====(
 </head>
 <body>
     <form>
-      <label><b><h1>Funkció kiválasztás</h1></b></label><br>
-      <button class="btn1" onclick="window.location.href='/esp'">
-        <span style="white-space: pre-line;">ESP32 processzor firmware frissítés</span></button><br><br><br><br>
-      <button class="btn2" onclick="window.location.href='/nextion'">
-        <span style="white-space: pre-line;">Kijelző firmware frissítés</span></button><br><br><br><br>
-      <button class="btn3" onclick="window.location.href='/grafikon'">
-        <span style="white-space: pre-line;">Grafikon kijelzés</span></button>
+    <label><b><h1>Funkció kiválasztás</h1></b></label><br>
+    <input type="button" class="btn1" value="ESP32 processzor firmware frissítés" onclick="window.location.href='/esp';" /><br><br><br><br>
+    <input type="button" class="btn2" value="Nextion kijelző firmware frissítés" onclick="window.location.href='/nextion';" /><br><br><br><br>
+    <input type="button" class="btn3" value="Grafikon megjelenítés" onclick="window.location.href='/grafikon';" />
     </form>
 </body>
 </html>
 )====";
 
 #endif
+
+/*
+    <button class="btn3" onclick="window.location.href='/grafikon';">
+      <span>Grafikon megjelenítés</span></button>
+*/
+
+
+
+

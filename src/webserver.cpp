@@ -106,9 +106,7 @@ void setup() {
 //***********************************************NEXTION UPDATE************************************************************************************************* 
 // Index page
     server.on("/nextion", HTTP_GET, [](AsyncWebServerRequest *request) {
-        AsyncResponseStream *response = request->beginResponseStream("text/html");
-        response->print(nextion_index_html);
-        request->send(response); 
+        request->send_P(200, "text/html", nextion_index_html); 
     });
 // Fail page
     server.on("/nextion_fail", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -120,7 +118,7 @@ void setup() {
     });
 // Success page
     server.on("/nextion_success", HTTP_GET, [](AsyncWebServerRequest *request) {
-        request->send(302, "text/html", nextion_update_success_html);
+        request->send_P(302, "text/html", nextion_update_success_html);
     });
 // Receive Firmware file size
     server.on("/size", HTTP_POST, [](AsyncWebServerRequest *request) {},
@@ -163,23 +161,19 @@ void setup() {
         request->send_P(200, "text/html", grafikon_html);
     });
     server.on("/highcharts.js", HTTP_GET, [](AsyncWebServerRequest *request){
-        AsyncWebServerResponse *response = request->beginResponse_P(200, "text/javascript", highcharts_js);
-        request->send(response);
+        request->send_P(200, "text/javascript", highcharts_js);
     });
     server.on("/exporting.js", HTTP_GET, [](AsyncWebServerRequest *request){
-        AsyncWebServerResponse *response = request->beginResponse_P(200, "text/javascript", exporting_js);
-        request->send(response);
+        request->send_P(200, "text/javascript", exporting_js);
     });
     server.on("/offline-exporting.js", HTTP_GET, [](AsyncWebServerRequest *request){
-        AsyncWebServerResponse *response = request->beginResponse_P(200, "text/javascript", offline_exporting_js);
-        request->send(response);
+        request->send_P(200, "text/javascript", offline_exporting_js);
     });
     server.onNotFound([](AsyncWebServerRequest *request) {
         request->send(404, "text/plain", "Not found");
     });
     ws.onEvent(onWsEvent);
     server.addHandler(&ws);
-    // Szerverindítása
     server.begin();
     //server.end();
 }
@@ -197,23 +191,19 @@ void loop() {
     acceleration = -1.66;
     rpm = 3500;
 
-
     WebsocketSending(INTERVAL, data_stream, rpm, coolant, imap, emap, intakeair, acceleration);
 }
 
 
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
     if (type == WS_EVT_CONNECT) {
-        // Websocket open
         data_stream = true;
     }
     else if (type == WS_EVT_DISCONNECT) {
-        // Websocket close
         data_stream = false;
         ws.cleanupClients();
     }
     else if (type == WS_EVT_DATA) {
-        // Data received
     }
 }
 
