@@ -1,6 +1,6 @@
 #include <ESPAsyncWebServer.h>
-#include <Update.h>
-#include <NextionUploadWIFI.h>
+//#include <Update.h>
+//#include <NextionUploadWIFI.h>
 #include "esp_pages.h"
 #include "nextion_pages.h"
 #include "index_page.h"
@@ -53,7 +53,7 @@ bool nextionShouldReboot;
 AsyncWebServer server(SERVER_PORT);
 AsyncWebSocket ws("/ws");
 // Create Nextion WiFi Uploader object
-NextionUploadWIFI nextion(SERIAL2_BAUD, SERIAL2_RX_PIN, SERIAL2_TX_PIN);
+//NextionUploadWIFI nextion(SERIAL2_BAUD, SERIAL2_RX_PIN, SERIAL2_TX_PIN);
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
 void WebsocketSending(const uint32_t interval, bool dataStream, uint16_t RpmData, float CoolantData, float ImapData, float EmapData, float IntakeairData, float AccelerationData);
 //**************************************************************************************************************************************************************************
@@ -76,6 +76,7 @@ void setup() {
 		view_html += esp_update_html;
 		request->send(200, "text/html", view_html);
 	});
+    /*
 	// Ha a frissítés gombot megnyomjuk
 	server.on("/esp_update", HTTP_POST, [](AsyncWebServerRequest *request) {
   	espShouldReboot = !Update.hasError();
@@ -103,6 +104,7 @@ void setup() {
 			}
 		} 
 	});
+    */
 //***********************************************NEXTION UPDATE************************************************************************************************* 
 // Index page
     server.on("/nextion", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -126,6 +128,7 @@ void setup() {
     [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
         {
             filesize = atoi((const char *)data);
+            /*
             check_status = nextion.check(filesize);
             if (check_status == 1) {
                 error_reason = CHECK_STATUS_1;
@@ -139,6 +142,7 @@ void setup() {
                 error_reason = "";
                 request->send(200);
             }
+            */
     });
     // Receive Firmware cunks and flash Nextion display
     server.on("/update", HTTP_POST, [](AsyncWebServerRequest *request) {},
@@ -146,7 +150,7 @@ void setup() {
     [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
         {
         if(len) {
-            upload_status = nextion.uploadTftFile(data, len);
+            //upload_status = nextion.uploadTftFile(data, len);
             if (!upload_status) {
                 error_reason = UPLOAD_STATUS;
                 request->redirect("/nextion_fail");
