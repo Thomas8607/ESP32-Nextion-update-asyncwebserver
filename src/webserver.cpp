@@ -219,7 +219,7 @@ void WebsocketSending(const uint32_t interval, bool dataStream, bool pause, uint
         wsData.emapPressure = int16_t((EmapData) * 100);
         wsData.intakeairTemp = int16_t((IntakeairData) * 10);
         wsData.rpm = uint16_t(RpmData);
-        wsData.time += INTERVAL;
+        wsData.time += interval;
         uint8_t * bytePtr = (uint8_t*) &wsData;    
         ws.binaryAll(bytePtr, sizeof(wsData));
         lastUpdate = millis();
