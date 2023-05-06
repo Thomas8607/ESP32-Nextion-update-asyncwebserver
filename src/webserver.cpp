@@ -41,6 +41,7 @@ bool espShouldReboot;
 float cosValue, sinValue;
 static unsigned long lastUpdate = millis();
 bool data_stream;
+bool pause_state;
 uint32_t filesize;
 uint8_t check_status;
 bool upload_status;
@@ -53,7 +54,7 @@ AsyncWebSocket ws("/ws");
 // Create Nextion WiFi Uploader object
 NextionUploadWIFI nextion(SERIAL2_BAUD, SERIAL2_RX_PIN, SERIAL2_TX_PIN);
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
-void WebsocketSending(const uint32_t interval, bool dataStream, uint16_t RpmData, float CoolantData, float ImapData, float EmapData, float IntakeairData);
+void WebsocketSending(const uint32_t interval, bool dataStream, bool pause, uint16_t RpmData, float CoolantData, float ImapData, float EmapData, float IntakeairData);
 //**************************************************************************************************************************************************************************
 void setup() {
     // Serial port inicializálása
@@ -188,9 +189,8 @@ void loop() {
     intakeair = 125.2;
     rpm = 3500;
 
-    WebsocketSending(INTERVAL, data_stream, rpm, coolant, imap, emap, intakeair);
+    WebsocketSending(INTERVAL, data_stream, pause_state, rpm, coolant, imap, emap, intakeair);
 }
-
 
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
     if (type == WS_EVT_CONNECT) {
@@ -201,16 +201,23 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
         ws.cleanupClients();
     }
     else if (type == WS_EVT_DATA) {
+    String message = String((char*)data);
+        if(message == "on") {
+            pause_state = true;
+        }
+        else {
+            pause_state = false;
+        }
     }
 }
 
-void WebsocketSending(const uint32_t interval, bool dataStream, uint16_t RpmData, float CoolantData, float ImapData, float EmapData, float IntakeairData) {
+void WebsocketSending(const uint32_t interval, bool dataStream, bool pause, uint16_t RpmData, float CoolantData, float ImapData, float EmapData, float IntakeairData) {
     static uint32_t lastUpdate = 0;
     static struct Data wsData;
     if(!dataStream) {
         wsData.time = 0;   
     }
-    if (((millis() - lastUpdate) > interval) && dataStream) {
+    if ((((millis() - lastUpdate) > interval) && dataStream) && !pause) {
         wsData.coolantTemp = int16_t((CoolantData) * 10);
         wsData.imapPressure = int16_t((ImapData) * 100);
         wsData.emapPressure = int16_t((EmapData) * 100);
