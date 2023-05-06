@@ -93,7 +93,6 @@ const char grafikon_html[] PROGMEM = R"====(
         <div id='intakeChartContainer' class='container' style="position: relative; width:90vw; margin:auto"></div>
     </p>
     <script>
-        // Fordulatszám grafikon inicializálása
         var rpmChart = new Highcharts.chart({
             chart: {
                 renderTo: 'rpmChartContainer'
@@ -157,7 +156,6 @@ const char grafikon_html[] PROGMEM = R"====(
             document.getElementById('minrpm').textContent = '';
             document.getElementById('maxrpm').textContent = '';
         });
-        // Hűtőfolyadék grafikon inicializálása
         var coolantChart = new Highcharts.chart({
             chart: {
                 renderTo: 'coolantChartContainer'
@@ -221,7 +219,6 @@ const char grafikon_html[] PROGMEM = R"====(
             document.getElementById('mincooltemp').textContent = '';
             document.getElementById('maxcooltemp').textContent = '';
         });
-        // IMAP grafikon inicializálása
         var imapChart = new Highcharts.chart({
             chart: {
                 renderTo: 'imapChartContainer'
@@ -284,7 +281,6 @@ const char grafikon_html[] PROGMEM = R"====(
             document.getElementById('minimap').textContent = '';
             document.getElementById('maximap').textContent = '';
         });
-        // EMAP grafikon inicializálása
         var emapChart = new Highcharts.chart({
             chart: {
                 renderTo: 'emapChartContainer'
@@ -347,7 +343,6 @@ const char grafikon_html[] PROGMEM = R"====(
             document.getElementById('minemap').textContent = '';
             document.getElementById('maxemap').textContent = '';
         });
-        // IntakeAirTemp grafikon inicializálása
         var IntakeAirChart = new Highcharts.chart({
             chart: {
                 renderTo: 'intakeChartContainer'
@@ -410,7 +405,6 @@ const char grafikon_html[] PROGMEM = R"====(
             document.getElementById('minintake').textContent = '';
             document.getElementById('maxintake').textContent = '';
         });
-        // Websocket
         var toggleState = false;
         var webSocket = new WebSocket("ws://" + window.location.hostname + "/ws");
         webSocket.binaryType = 'arraybuffer';
@@ -422,8 +416,6 @@ const char grafikon_html[] PROGMEM = R"====(
             var imapPressure = dataView.getInt16(8, true) / 100;
             var emapPressure = dataView.getInt16(10, true) / 100;
             var intakeairTemp = dataView.getInt16(12, true) / 10;
-            //console.log("X_Time: " + x_time + ", Rpm: " + rpm + ", CoolantTemp: " + coolantTemp + ", Imap: " + imapPressure + ", Emap: " + emapPressure + ", IntakeairTemp: " + intakeairTemp);
-            // Rpm
             if (lastValueRpm === null) {
                 minRpm = rpm;
                 maxRpm = rpm;
@@ -440,7 +432,6 @@ const char grafikon_html[] PROGMEM = R"====(
             document.getElementById('minrpm').textContent = minRpm;
             document.getElementById('maxrpm').textContent = maxRpm;
             document.getElementById("rpm").innerHTML = rpm;
-            // CoolantTemperature
             if (lastValueCoolant === null) {
                 minCoolantTemp = coolantTemp;
                 maxCoolantTemp = coolantTemp;
@@ -457,7 +448,6 @@ const char grafikon_html[] PROGMEM = R"====(
             document.getElementById('mincooltemp').textContent = minCoolantTemp;
             document.getElementById('maxcooltemp').textContent = maxCoolantTemp;
             document.getElementById("cooltemp").innerHTML = coolantTemp;
-            // Imap
             if (lastValueImap === null) {
                 minImap = imapPressure;
                 maxImap = imapPressure;
@@ -474,7 +464,6 @@ const char grafikon_html[] PROGMEM = R"====(
             document.getElementById('minimap').textContent = minImap;
             document.getElementById('maximap').textContent = maxImap;
             document.getElementById("imap").innerHTML = imapPressure;
-            // Emap
             if (lastValueEmap === null) {
                 minEmap = emapPressure;
                 maxEmap = emapPressure;
@@ -491,7 +480,6 @@ const char grafikon_html[] PROGMEM = R"====(
             document.getElementById('minemap').textContent = minEmap;
             document.getElementById('maxemap').textContent = maxEmap;
             document.getElementById("emap").innerHTML = emapPressure;
-            // IntakeAirTemp
             if (lastValueIntakeAir === null) {
                 minIntakeAir = intakeairTemp;
                 maxIntakeAir = intakeairTemp;
@@ -516,19 +504,9 @@ const char grafikon_html[] PROGMEM = R"====(
                 for (var j = 0; j < buttons.length; j++) {
                     buttons[j].innerHTML = toggleState ? "Szünet bekapcsolva" : "Szünet kikapcsolva";
                 }
-            // A gomb állapotának továbbítása az ESP32-nek
             webSocket.send(toggleState ? "on" : "off");
             });
         }
-        webSocket.onopen = function(event) {
-            console.log("WebSocket opened");
-        };
-        webSocket.onclose = function(event) {
-            console.log("WebSocket closed");
-        };
-        webSocket.onerror = function(event) {
-            console.log("WebSocket error: " + event);
-        };
     </script>
 </body>
 </html>

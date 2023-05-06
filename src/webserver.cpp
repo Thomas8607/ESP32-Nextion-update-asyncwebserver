@@ -13,8 +13,8 @@
 #define SERIAL2_RX_PIN GPIO_NUM_41
 #define SERIAL2_TX_PIN GPIO_NUM_42
 #define SERVER_PORT 80
-#define INTERVAL 80
-// Websocket struktúra
+#define WS_SENDING_INTERVAL 80
+// Websocket sending struct
 struct Data {
     uint32_t time;
     uint16_t rpm;
@@ -23,23 +23,22 @@ struct Data {
     int16_t emapPressure;
     int16_t intakeairTemp; 
 };
-// Ideiglenes adatok
+// Temp data
 #define sinminVal 10.0
 #define sinmaxVal 90.0
 #define cosminVal 0.1
 #define cosmaxVal 3.8
+float cosValue, sinValue;
 float coolant, imap, emap, intakeair, acceleration;
 uint16_t rpm;
 
-// Wifi adatok
+// Wifi data
 const char *ssid = "ESP_proba";
 const char *password = "123456789";
 IPAddress local_IP(192, 168, 10, 100);
 IPAddress gateway(192, 168, 10, 100);
 String FW_VERSION = "2.0";
 bool espShouldReboot;
-float cosValue, sinValue;
-static unsigned long lastUpdate = millis();
 bool data_stream;
 bool pause_state;
 uint32_t filesize;
@@ -47,7 +46,6 @@ uint8_t check_status;
 bool upload_status;
 String check_reason = "";
 String error_reason = "";
-bool nextionShouldReboot;
 
 AsyncWebServer server(SERVER_PORT);
 AsyncWebSocket ws("/ws");
@@ -57,17 +55,15 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
 void WebsocketSending(const uint32_t interval, bool dataStream, bool pause, uint16_t RpmData, float CoolantData, float ImapData, float EmapData, float IntakeairData);
 //**************************************************************************************************************************************************************************
 void setup() {
-    // Serial port inicializálása
     Serial.begin(115200);
     WiFi.softAP(ssid, password);
     WiFi.softAPConfig(local_IP, gateway, IPAddress(255, 255, 255, 0));
-    //Serial.println("AP IP címe: " + WiFi.softAPIP().toString());
-//**************************************************************VÁLASZTÓ OLDAL********************************************************************************************
+//**************************************************************INDEX PAGE********************************************************************************************
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(200, "text/html", index_html);
   });
 //*********************************************ESP UPDATE*****************************************************************************************************************
-	// Ha beírjuk az IP címet /esp
+	// If /esp page load
 	server.on("/esp", HTTP_GET, [](AsyncWebServerRequest *request) {
 		String view_html;
 		view_html += esp_header_html;
@@ -75,7 +71,7 @@ void setup() {
 		view_html += esp_update_html;
 		request->send(200, "text/html", view_html);
 	});
-	// Ha a frissítés gombot megnyomjuk
+	// If push the update button
 	server.on("/esp_update", HTTP_POST, [](AsyncWebServerRequest *request) {
   	espShouldReboot = !Update.hasError();
   	AsyncWebServerResponse *response = request->beginResponse(200, "text/html", espShouldReboot ? esp_update_success_html : esp_update_failed_html);
@@ -155,7 +151,7 @@ void setup() {
             }
         }
     });
-//***************************************GRAFIKON***********************************************//
+//***************************************CHARTS***********************************************//
     server.on("/grafikon", HTTP_GET, [](AsyncWebServerRequest *request) {
         request->send_P(200, "text/html", grafikon_html);
     });
@@ -176,22 +172,22 @@ void setup() {
     server.begin();
     //server.end();
 }
-// Loop függvény
+
 void loop() {
 	if (espShouldReboot) {
 		delay(100);
 		ESP.restart();
 	}
-// Ideiglenes adatok
+// Temp data
     coolant = sinminVal + ((sinmaxVal - sinminVal) / 2) + ((sinmaxVal - sinminVal) / 2) * sin(millis() * 0.001);
     imap = cosminVal + ((cosmaxVal - cosminVal) / 2) + ((cosmaxVal - cosminVal) / 2) * cos(millis() * 0.001);
     emap = -1 * imap;
     intakeair = 125.2;
     rpm = 3500;
 
-    WebsocketSending(INTERVAL, data_stream, pause_state, rpm, coolant, imap, emap, intakeair);
+    WebsocketSending(WS_SENDING_INTERVAL, data_stream, pause_state, rpm, coolant, imap, emap, intakeair);
 }
-
+// Websocket receiving
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
     if (type == WS_EVT_CONNECT) {
         data_stream = true;
@@ -210,7 +206,7 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
         }
     }
 }
-
+// Websocket sending
 void WebsocketSending(const uint32_t interval, bool dataStream, bool pause, uint16_t RpmData, float CoolantData, float ImapData, float EmapData, float IntakeairData) {
     static uint32_t lastUpdate = 0;
     static struct Data wsData;

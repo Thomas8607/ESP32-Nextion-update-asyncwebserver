@@ -58,13 +58,8 @@ const char* index_html PROGMEM = R"====(
 </body>
 </html>
 )====";
-
 #endif
 
-/*
-    <button class="btn3" onclick="window.location.href='/grafikon';">
-      <span>Grafikon megjelenítés</span></button>
-*/
 
 
 
